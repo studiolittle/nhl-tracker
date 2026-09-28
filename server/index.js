@@ -25,7 +25,7 @@ async function cached(key, loader, ttl = 300_000) {
   return request;
 }
 async function fetchNhl(url, json = true) {
-  const response = await fetch(url, { signal: AbortSignal.timeout(15_000), headers: { 'User-Agent': 'BlueLine-NHL-Dashboard/0.1', Accept: json ? 'application/json' : 'text/html' } });
+  const response = await fetch(url, { signal: AbortSignal.timeout(15_000), headers: { 'User-Agent': 'TapeToTape-NHL-Dashboard/0.1', Accept: json ? 'application/json' : 'text/html' } });
   if (!response.ok) throw new Error(`NHL returned ${response.status}`);
   return json ? response.json() : response.text();
 }
@@ -81,4 +81,4 @@ if (process.env.VERCEL || process.argv.includes('--production')) {
   app.use(vite.middlewares);
 }
 const port = Number(process.env.PORT || 3000);
-if (!process.env.VERCEL) app.listen(port, '127.0.0.1', () => console.log(`Blue Line is running at http://localhost:${port}`));
+if (!process.env.VERCEL) app.listen(port, '127.0.0.1', () => console.log(`Tape to Tape is running at http://localhost:${port}`));
