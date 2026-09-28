@@ -8,7 +8,13 @@ const seasonLabel = year => `${year}–${String(year + 1).slice(-2)}`;
 const dateLabel = date => new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 async function getJson(url, signal) {
   const response = await fetch(url, { signal });
-  const data = await response.json();
+  const raw = await response.text();
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error(response.ok ? 'The source returned an unexpected response. Please try again.' : `The data request failed (${response.status}). Please try again.`);
+  }
   if (!response.ok) throw new Error(data.error || 'Unable to load data. Try again.');
   return data;
 }
