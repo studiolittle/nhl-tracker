@@ -5,6 +5,7 @@ import { extractTradePlayers, parseTrades, playerStats, seasonStart } from './nh
 test('trade assets expose every named player while excluding draft picks', () => {
   assert.deepEqual(extractTradePlayers('forwards Dylan Cozens and Dennis Gilbert and a 2nd-round pick in the 2026 NHL Draft'), ['Dylan Cozens', 'Dennis Gilbert']);
   assert.deepEqual(extractTradePlayers('forwards Kirill Marchenko and Miles Wood and goalie Elvis Merzlikins'), ['Kirill Marchenko', 'Miles Wood', 'Elvis Merzlikins']);
+  assert.deepEqual(extractTradePlayers('defenseman Sean Durzi, forward Cole Beaudoin and a 3rd-round pick in the 2027 NHL Draft'), ['Sean Durzi', 'Cole Beaudoin']);
   assert.deepEqual(extractTradePlayers('future considerations'), []);
 });
 

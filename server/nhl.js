@@ -16,7 +16,7 @@ export function extractTradePlayers(text = '') {
   value = value.split(/\s*,?\s+(?:a|an)\s+\d+(?:st|nd|rd|th)-round pick/i)[0];
   const groups = value.replace(/\b(?:forwards?|defensemen?|defenseman|goaltenders?|goalies?|centers?|centre)\b/gi, '|').split('|');
   return groups.flatMap(group => group.split(/\s+and\s+/i))
-    .map(name => name.replace(/^(?:a|an)\s+/i, '').trim())
+    .map(name => name.replace(/^(?:a|an)\s+/i, '').replace(/[\s,]+$/, '').trim())
     .filter(name => name && !/round pick|future considerations|consideration/i.test(name));
 }
 
