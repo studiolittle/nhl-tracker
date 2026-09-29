@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseTrades, playerStats, seasonStart } from './nhl.js';
+import { extractTradePlayers, parseTrades, playerStats, seasonStart } from './nhl.js';
+
+test('trade assets expose every named player while excluding draft picks', () => {
+  assert.deepEqual(extractTradePlayers('forwards Dylan Cozens and Dennis Gilbert and a 2nd-round pick in the 2026 NHL Draft'), ['Dylan Cozens', 'Dennis Gilbert']);
+  assert.deepEqual(extractTradePlayers('forwards Kirill Marchenko and Miles Wood and goalie Elvis Merzlikins'), ['Kirill Marchenko', 'Miles Wood', 'Elvis Merzlikins']);
+  assert.deepEqual(extractTradePlayers('future considerations'), []);
+});
 
 test('NHL trade parsing preserves full packages, source links and season rollover', () => {
   const html = '<p>Not a trade</p><p><strong>JANUARY 2:</strong> Toronto Maple Leafs acquire forward Test Player from the Ottawa Senators for a conditional 2nd-round pick in the 2028 NHL Draft. | <a href="https://www.nhl.com/news/test">Details</a></p><p><strong>JULY 1:</strong> Ottawa Senators acquire goalie Another Player from the Toronto Maple Leafs for future considerations.</p>';

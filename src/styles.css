@@ -158,6 +158,24 @@ tbody tr:hover { background: #f6fafd; }
 .stat-row .stat-winner { color: #176c9b; }
 .stat-row > span { font-size: 1rem; color: var(--muted); }
 .comparison-message { font-size: var(--text-small); line-height: 1.6; background: #edf6fc; color: #375f7b; margin: 0 26px 20px; padding: 14px; border-radius: 4px; }
+.additional-players { border-top: 1px solid var(--line); margin-top: 4px; padding: 22px 26px 8px; }
+.additional-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.additional-heading h3 { font-size: 1.15rem; color: var(--navy); }
+.additional-heading span { min-width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: #edf4f8; color: #426782; font-weight: 600; }
+.trade-packages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.trade-package { min-width: 0; }
+.trade-package > h3 { font-size: var(--text-small); color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+.package-empty { font-size: var(--text-small); color: var(--muted); padding: 13px; background: #f8fbfd; border: 1px dashed var(--line); border-radius: 5px; }
+.trade-player-card { border: 1px solid var(--line); border-radius: 6px; padding: 12px; background: #fbfdfe; margin-bottom: 8px; }
+.trade-player-card-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.trade-player-card-head img, .trade-player-avatar { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; object-fit: cover; background: #e7f0f5; }
+.trade-player-avatar { display: grid; place-items: center; color: #3d6179; font-size: .85rem; font-weight: 700; }
+.trade-player-card-head > div:last-child { min-width: 0; }
+.trade-player-card-head strong { display: block; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trade-player-card-head span { display: block; color: var(--muted); font-size: .85rem; margin-top: 3px; }
+.trade-player-card-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #e8eff3; }
+.trade-player-card-stats span { display: grid; gap: 1px; text-align: center; color: var(--muted); font-size: .7rem; }
+.trade-player-card-stats b { color: #315d7c; font-size: 1rem; }
 
 .insider .section-heading > svg { color: #607f94; }
 .x-mark { font-size: 1.625rem; }
@@ -273,6 +291,8 @@ footer > a:last-child { margin-left: auto; display: flex; gap: 5px; align-items:
   .stat-row { padding: 12px 0; }
   .section-description { margin-left: 16px; margin-right: 16px; }
   .comparison-message { margin-left: 16px; margin-right: 16px; }
+  .additional-players { padding-left: 16px; padding-right: 16px; }
+  .trade-packages { grid-template-columns: 1fr; gap: 10px; }
   .standings-scroll { padding: 0 10px; }
   thead th, tbody td, tbody th { padding-left: 5px; padding-right: 5px; }
   tbody th img { margin-right: 6px; }

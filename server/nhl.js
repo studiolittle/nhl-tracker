@@ -7,6 +7,19 @@ export function trackerUrl(year = seasonStart()) {
   return `https://www.nhl.com/news/topic/trade-coverage/${year}-${String(year + 1).slice(-2)}-nhl-trades`;
 }
 
+export function extractTradePlayers(text = '') {
+  let value = text.replace(/\.$/, '').trim();
+  if (!value || /future considerations/i.test(value)) return [];
+  // Draft picks and conditions are assets, not player names. Remove them before
+  // splitting the remaining role-labelled player groups.
+  value = value.split(/\s+and\s+(?:a|an)\s+\d+(?:st|nd|rd|th)-round pick/i)[0];
+  value = value.split(/\s*,?\s+(?:a|an)\s+\d+(?:st|nd|rd|th)-round pick/i)[0];
+  const groups = value.replace(/\b(?:forwards?|defensemen?|defenseman|goaltenders?|goalies?|centers?|centre)\b/gi, '|').split('|');
+  return groups.flatMap(group => group.split(/\s+and\s+/i))
+    .map(name => name.replace(/^(?:a|an)\s+/i, '').trim())
+    .filter(name => name && !/round pick|future considerations|consideration/i.test(name));
+}
+
 export function parseTrades(html, year, teams) {
   const $ = cheerio.load(html);
   const trades = [];
@@ -23,7 +36,9 @@ export function parseTrades(html, year, teams) {
     const link = $(element).find('a[href]').first().attr('href');
     let source = trackerUrl(year);
     try { const url = new URL(link, source); if (url.protocol === 'https:' && url.hostname === 'www.nhl.com') source = url.href; } catch { /* Use tracker source. */ }
-    trades.push({ id: `${date}-${trades.length}`, date, to: findTeam(to), from: findTeam(from), received, sent: sent.replace(/\.$/, ''), source });
+    const cleanReceived = received.replace(/\.$/, '');
+    const cleanSent = sent.replace(/\.$/, '');
+    trades.push({ id: `${date}-${trades.length}`, date, to: findTeam(to), from: findTeam(from), received: cleanReceived, sent: cleanSent, receivedPlayers: extractTradePlayers(cleanReceived), sentPlayers: extractTradePlayers(cleanSent), source });
   });
   return trades.sort((a, b) => b.date.localeCompare(a.date));
 }

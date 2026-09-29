@@ -22,12 +22,34 @@ function useData(url, version = 0) {
   const [state, setState] = useState({ data: null, loading: true, error: '' });
   useEffect(() => {
     const controller = new AbortController();
+    if (!url) {
+      setState({ data: null, loading: false, error: '' });
+      return () => controller.abort();
+    }
     setState({ data: null, loading: true, error: '' });
     getJson(url, controller.signal).then(data => setState({ data, loading: false, error: '' })).catch(error => {
       if (error.name !== 'AbortError') setState({ data: null, loading: false, error: error.message });
     });
     return () => controller.abort();
   }, [url, version]);
+  return state;
+}
+function usePlayersData(players, season, version = 0) {
+  const ids = players.map(player => player?.id || '').join(',');
+  const [state, setState] = useState({ players: [], loading: false, error: '' });
+  useEffect(() => {
+    const controller = new AbortController();
+    const validPlayers = players.filter(player => player?.id);
+    if (!validPlayers.length) {
+      setState({ players: [], loading: false, error: '' });
+      return () => controller.abort();
+    }
+    setState({ players: [], loading: true, error: '' });
+    Promise.all(validPlayers.map(player => getJson(`/api/players/${player.id}?season=${season}`, controller.signal).then(data => data.player)))
+      .then(stats => setState({ players: stats, loading: false, error: '' }))
+      .catch(error => { if (error.name !== 'AbortError') setState({ players: [], loading: false, error: error.message }); });
+    return () => controller.abort();
+  }, [ids, season, version]);
   return state;
 }
 function Logo({ team, size = 32 }) {
@@ -58,7 +80,7 @@ function PlayerPicker({ label, selected, onSelect }) {
     {query.trim().length >= 2 && <div className="search-results">{status && <p role="status">{status}</p>}{results.map(player => <button key={player.id} onClick={() => { onSelect(player); setQuery(''); setResults([]); }}><span>{player.name}</span><small>{player.team || 'NHL'} · {player.position}</small></button>)}</div>}
   </div>;
 }
-function Comparison({ selectedTrade, version }) {
+function LegacyComparison({ selectedTrade, version }) {
   const [season, setSeason] = useState(currentYear - 1);
   const [left, setLeft] = useState({ id: 8478420, name: 'Mikko Rantanen' });
   const [right, setRight] = useState({ id: 8482702, name: 'Logan Stankoven' });
@@ -92,6 +114,93 @@ function Comparison({ selectedTrade, version }) {
     })}</div>}
     {players.some(p => p && !p.hasStats) && <p className="notice">No NHL regular-season stats available for one or both players in {seasonLabel(season)}.</p>}
     {(a.data?.stale || b.data?.stale) && <p className="notice">Saved player stats shown; NHL is temporarily unavailable.</p>}
+    <div className="panel-foot"><span>Regular season · All teams combined</span><a href="https://www.nhl.com/stats/" target="_blank" rel="noreferrer">NHL stats <ArrowUpRight size={13}/></a></div>
+  </section>;
+}
+function tradePlayerNames(text = '') {
+  let value = text.replace(/\.$/, '').trim();
+  if (!value || /future considerations/i.test(value)) return [];
+  value = value.split(/\s+and\s+(?:a|an)\s+(?:conditional\s+)?\d+(?:st|nd|rd|th)-round pick/i)[0];
+  value = value.split(/\s*,?\s+(?:a|an)\s+(?:conditional\s+)?\d+(?:st|nd|rd|th)-round pick/i)[0];
+  return value.replace(/\b(?:forwards?|defensemen?|defenseman|goaltenders?|goalies?|centers?|centre)\b/gi, '|').split('|')
+    .flatMap(group => group.split(/\s+and\s+/i))
+    .map(name => name.replace(/^(?:a|an)\s+/i, '').trim())
+    .filter(name => name && !/round pick|future considerations|consideration/i.test(name));
+}
+function Comparison({ selectedTrade, version }) {
+  const [season, setSeason] = useState(currentYear - 1);
+  const defaultLeft = { id: 8478420, name: 'Mikko Rantanen' };
+  const defaultRight = { id: 8482702, name: 'Logan Stankoven' };
+  const [left, setLeft] = useState(defaultLeft);
+  const [right, setRight] = useState(defaultRight);
+  const [tradePlayers, setTradePlayers] = useState({ left: [defaultLeft], right: [defaultRight] });
+  const [tradeMessage, setTradeMessage] = useState('');
+  useEffect(() => {
+    if (!selectedTrade) {
+      setTradePlayers({ left: [defaultLeft], right: [defaultRight] });
+      setLeft(defaultLeft);
+      setRight(defaultRight);
+      setTradeMessage('');
+      return undefined;
+    }
+    const controller = new AbortController();
+    const leftNames = selectedTrade.receivedPlayers?.length ? selectedTrade.receivedPlayers : tradePlayerNames(selectedTrade.received);
+    const rightNames = selectedTrade.sentPlayers?.length ? selectedTrade.sentPlayers : tradePlayerNames(selectedTrade.sent);
+    const empty = name => ({ id: null, name });
+    const placeholders = { left: leftNames.map(empty), right: rightNames.map(empty) };
+    setTradePlayers(placeholders);
+    setLeft(placeholders.left[0] || empty('No named player'));
+    setRight(placeholders.right[0] || empty('No named player'));
+    setTradeMessage('Loading every named player in this trade...');
+    const normalize = name => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const resolve = name => getJson('/api/players/search?q=' + encodeURIComponent(name), controller.signal)
+      .then(data => data.players.find(player => normalize(player.name) === normalize(name)) || null);
+    Promise.all([Promise.all(leftNames.map(resolve)), Promise.all(rightNames.map(resolve))])
+      .then(([resolvedLeft, resolvedRight]) => {
+        const leftPlayers = leftNames.map((name, index) => resolvedLeft[index] || empty(name));
+        const rightPlayers = rightNames.map((name, index) => resolvedRight[index] || empty(name));
+        setTradePlayers({ left: leftPlayers, right: rightPlayers });
+        setLeft(leftPlayers[0] || empty('No named player'));
+        setRight(rightPlayers[0] || empty('No named player'));
+        const named = leftNames.length + rightNames.length;
+        const found = [...resolvedLeft, ...resolvedRight].filter(Boolean).length;
+        setTradeMessage(named > 2
+          ? 'Showing ' + found + ' of ' + named + ' named players from this trade.'
+          : found === named ? '' : 'Some trade assets do not have a matching NHL player record.');
+      })
+      .catch(error => { if (error.name !== 'AbortError') setTradeMessage('Player search is unavailable. Try this trade again.'); });
+    return () => controller.abort();
+  }, [selectedTrade]);
+  const a = useData(left?.id ? '/api/players/' + left.id + '?season=' + season : null, version);
+  const b = useData(right?.id ? '/api/players/' + right.id + '?season=' + season : null, version);
+  const extraPlayers = [...tradePlayers.left.slice(1).map(player => ({ ...player, side: 'left' })), ...tradePlayers.right.slice(1).map(player => ({ ...player, side: 'right' }))];
+  const extras = usePlayersData(extraPlayers, season, version);
+  const extraStats = new Map(extras.players.map(player => [String(player.id), player]));
+  const players = [a.data?.player, b.data?.player];
+  const goalies = players.every(p => p?.position === 'G');
+  const mixed = players.every(Boolean) && players[0].position !== players[1].position && players.some(p => p.position === 'G');
+  const metrics = goalies ? [['gamesPlayed', 'Games played'], ['wins', 'Wins'], ['savePct', 'Save percentage']] : [['gamesPlayed', 'Games played'], ['goals', 'Goals'], ['assists', 'Assists'], ['points', 'Points']];
+  const formatValue = (player, key) => {
+    if (!player?.hasStats || player[key] == null) return '—';
+    return key === 'savePct' ? player[key].toFixed(3) : player[key];
+  };
+  const packageCards = (packagePlayers, label, side) => <div className="trade-package"><h3>{label}</h3>{packagePlayers.length === 0 && <p className="package-empty">No player assets listed.</p>}{packagePlayers.map(player => {
+    const stat = player.id ? extraStats.get(String(player.id)) : null;
+    const statItems = stat?.position === 'G' ? [['gamesPlayed', 'GP'], ['wins', 'W'], ['savePct', 'SV%']] : [['gamesPlayed', 'GP'], ['goals', 'G'], ['assists', 'A'], ['points', 'P']];
+    return <article className="trade-player-card" key={side + '-' + player.name}><div className="trade-player-card-head">{stat?.headshot ? <img src={stat.headshot} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden'; }}/> : <div className="trade-player-avatar">{player.name.split(' ').map(word => word[0]).join('').slice(0, 2)}</div>}<div><strong>{player.name}</strong><span>{stat?.team || 'NHL'} · {stat?.position || '—'}</span></div></div><div className="trade-player-card-stats">{statItems.map(([key, short]) => <span key={key}><b>{extras.loading ? '…' : formatValue(stat, key)}</b>{short}</span>)}</div></article>;
+  })}</div>;
+  return <section className="panel comparison" id="compare"><div className="section-heading"><div className="heading-icon"><ArrowLeftRight size={18}/><h2>Player comparison</h2></div><select aria-label="Player stats season" value={season} onChange={e => setSeason(Number(e.target.value))}>{[currentYear, currentYear - 1, currentYear - 2].map(y => <option key={y} value={y}>{seasonLabel(y)}</option>)}</select></div>
+    <p className="section-description">{selectedTrade ? 'The first player on each side is compared below. Other named players are listed with their numbers.' : 'Two players. The numbers side by side.'}</p>
+    {tradeMessage && <p className="comparison-message" role="status">{tradeMessage}</p>}
+    <div className="picker-row"><PlayerPicker label="Player one" selected={left} onSelect={setLeft}/><PlayerPicker label="Player two" selected={right} onSelect={setRight}/></div>
+    <div className="player-matchup">{[a, b].map((state, index) => <div className={'player-profile player-' + index} key={index}>{state.data?.player?.headshot ? <img className="headshot" src={state.data.player.headshot} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden'; }}/> : <div className="headshot silhouette"/>}<div className="player-details"><span>{state.data?.player?.team || 'NHL'} <span className="position">{state.data?.player?.position || '—'}</span></span><h3>{(index === 0 ? left : right).name}</h3><small>Current team</small></div></div>)}<span className="versus">vs</span></div>
+    {(a.loading || b.loading) ? <div className="empty-state compact">Loading player stats...</div> : (a.error || b.error) ? <div className="notice error">{a.error || b.error}</div> : mixed ? <div className="notice">Choose two skaters or two goalies for a like-for-like comparison.</div> : <div className="stat-comparison">{metrics.map(([key, label]) => {
+      const values = players.map(p => p?.hasStats ? p[key] : null);
+      return <div className="stat-row" key={key}><strong className={values[0] > values[1] ? 'stat-winner' : ''}>{values[0] == null ? '—' : key === 'savePct' ? values[0].toFixed(3) : values[0]}</strong><span>{label}</span><strong className={values[1] > values[0] ? 'stat-winner' : ''}>{values[1] == null ? '—' : key === 'savePct' ? values[1].toFixed(3) : values[1]}</strong></div>;
+    })}</div>}
+    {selectedTrade && extraPlayers.length > 0 && <div className="additional-players"><div className="additional-heading"><h3>Other players in this trade</h3><span>{extraPlayers.length}</span></div><div className="trade-packages">{packageCards(tradePlayers.left.slice(1), selectedTrade.to.name + ' receives', 'left')}{packageCards(tradePlayers.right.slice(1), selectedTrade.from.name + ' sends', 'right')}</div></div>}
+    {players.some(p => p && !p.hasStats) && <p className="notice">No NHL regular-season stats available for one or both players in {seasonLabel(season)}.</p>}
+    {(a.data?.stale || b.data?.stale || extras.error) && <p className="notice">{extras.error || 'Saved player stats shown; NHL is temporarily unavailable.'}</p>}
     <div className="panel-foot"><span>Regular season · All teams combined</span><a href="https://www.nhl.com/stats/" target="_blank" rel="noreferrer">NHL stats <ArrowUpRight size={13}/></a></div>
   </section>;
 }
