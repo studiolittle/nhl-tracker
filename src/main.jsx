@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowLeftRight, ArrowUpRight, Check, ChevronDown, CircleHelp, ExternalLink, ListFilter, RefreshCw, Search, ShieldCheck, Trophy, X } from 'lucide-react';
+import { ArrowLeftRight, ArrowUpRight, ChevronDown, CircleHelp, Menu, RefreshCw, Search, ShieldCheck, Trophy, X } from 'lucide-react';
 import './styles.css';
 
 const currentYear = new Date().getUTCFullYear() - (new Date().getUTCMonth() < 6 ? 1 : 0);
@@ -147,25 +147,28 @@ function Comparison({ selectedTrade, version }) {
     const leftNames = selectedTrade.receivedPlayers?.length ? selectedTrade.receivedPlayers : tradePlayerNames(selectedTrade.received);
     const rightNames = selectedTrade.sentPlayers?.length ? selectedTrade.sentPlayers : tradePlayerNames(selectedTrade.sent);
     const empty = name => ({ id: null, name });
-    const placeholders = { left: leftNames.map(empty), right: rightNames.map(empty) };
+    const leftDisplay = leftNames.length ? leftNames : [selectedTrade.received || 'No player asset listed'];
+    const rightDisplay = rightNames.length ? rightNames : [selectedTrade.sent || 'No player asset listed'];
+    const placeholders = { left: leftDisplay.map(empty), right: rightDisplay.map(empty) };
     setTradePlayers(placeholders);
-    setLeft(placeholders.left[0] || empty('No named player'));
-    setRight(placeholders.right[0] || empty('No named player'));
+    setLeft(placeholders.left[0]);
+    setRight(placeholders.right[0]);
     setTradeMessage('Loading every named player in this trade...');
     const normalize = name => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const resolve = name => getJson('/api/players/search?q=' + encodeURIComponent(name), controller.signal)
       .then(data => data.players.find(player => normalize(player.name) === normalize(name)) || null);
     Promise.all([Promise.all(leftNames.map(resolve)), Promise.all(rightNames.map(resolve))])
       .then(([resolvedLeft, resolvedRight]) => {
-        const leftPlayers = leftNames.map((name, index) => resolvedLeft[index] || empty(name));
-        const rightPlayers = rightNames.map((name, index) => resolvedRight[index] || empty(name));
+        const leftPlayers = leftNames.length ? leftNames.map((name, index) => resolvedLeft[index] || empty(name)) : placeholders.left;
+        const rightPlayers = rightNames.length ? rightNames.map((name, index) => resolvedRight[index] || empty(name)) : placeholders.right;
         setTradePlayers({ left: leftPlayers, right: rightPlayers });
-        setLeft(leftPlayers[0] || empty('No named player'));
-        setRight(rightPlayers[0] || empty('No named player'));
+        setLeft(leftPlayers[0]);
+        setRight(rightPlayers[0]);
         const named = leftNames.length + rightNames.length;
         const found = [...resolvedLeft, ...resolvedRight].filter(Boolean).length;
         setTradeMessage(named > 2
           ? 'Showing ' + found + ' of ' + named + ' named players from this trade.'
+          : named === 0 ? 'Non-player trade assets are shown as listed.'
           : found === named ? '' : 'Some trade assets do not have a matching NHL player record.');
       })
       .catch(error => { if (error.name !== 'AbortError') setTradeMessage('Player search is unavailable. Try this trade again.'); });
@@ -190,7 +193,7 @@ function Comparison({ selectedTrade, version }) {
     return <article className="trade-player-card" key={side + '-' + player.name}><div className="trade-player-card-head">{stat?.headshot ? <img src={stat.headshot} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden'; }}/> : <div className="trade-player-avatar">{player.name.split(' ').map(word => word[0]).join('').slice(0, 2)}</div>}<div><strong>{player.name}</strong><span>{stat?.team || 'NHL'} · {stat?.position || '—'}</span></div></div><div className="trade-player-card-stats">{statItems.map(([key, short]) => <span key={key}><b>{extras.loading ? '…' : formatValue(stat, key)}</b>{short}</span>)}</div></article>;
   })}</div>;
   return <section className="panel comparison" id="compare"><div className="section-heading"><div className="heading-icon"><ArrowLeftRight size={18}/><h2>Player comparison</h2></div><select aria-label="Player stats season" value={season} onChange={e => setSeason(Number(e.target.value))}>{[currentYear, currentYear - 1, currentYear - 2].map(y => <option key={y} value={y}>{seasonLabel(y)}</option>)}</select></div>
-    <p className="section-description">{selectedTrade ? 'The first player on each side is compared below. Other named players are listed with their numbers.' : 'Two players. The numbers side by side.'}</p>
+    <p className="section-description">{selectedTrade ? 'Player records are compared when available. Other trade assets are shown as listed.' : 'Two players. The numbers side by side.'}</p>
     {tradeMessage && <p className="comparison-message" role="status">{tradeMessage}</p>}
     <div className="picker-row"><PlayerPicker label="Player one" selected={left} onSelect={setLeft}/><PlayerPicker label="Player two" selected={right} onSelect={setRight}/></div>
     <div className="player-matchup">{[a, b].map((state, index) => <div className={'player-profile player-' + index} key={index}>{state.data?.player?.headshot ? <img className="headshot" src={state.data.player.headshot} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden'; }}/> : <div className="headshot silhouette"/>}<div className="player-details"><span>{state.data?.player?.team || 'NHL'} <span className="position">{state.data?.player?.position || '—'}</span></span><h3>{(index === 0 ? left : right).name}</h3><small>Current team</small></div></div>)}<span className="versus">vs</span></div>
@@ -204,55 +207,32 @@ function Comparison({ selectedTrade, version }) {
     <div className="panel-foot"><span>Regular season · All teams combined</span><a href="https://www.nhl.com/stats/" target="_blank" rel="noreferrer">NHL stats <ArrowUpRight size={13}/></a></div>
   </section>;
 }
-function FriedmanFeed() {
-  const container = useRef(null);
-  const [status, setStatus] = useState('idle');
-  useEffect(() => {
-    if (status !== 'loading') return;
-    let disposed = false;
-    const script = document.createElement('script');
-    script.src = 'https://platform.twitter.com/widgets.js'; script.async = true;
-    const fail = () => { if (!disposed) setStatus('unavailable'); };
-    script.onerror = fail;
-    script.onload = () => {
-      if (disposed) return;
-      if (!window.twttr?.widgets) { fail(); return; }
-      window.twttr.widgets.createTimeline({ sourceType: 'profile', screenName: 'FriedgeHNIC' }, container.current, { height: 430, chrome: 'noheader nofooter noborders', dnt: true }).then(el => { if (!disposed) setStatus(el ? 'ready' : 'unavailable'); }).catch(fail);
-    };
-    document.body.appendChild(script);
-    const timeout = setTimeout(fail, 15_000);
-    return () => { disposed = true; clearTimeout(timeout); script.remove(); };
-  }, [status === 'loading']);
-  return <section className="panel insider" id="insider"><div className="section-heading"><div className="heading-icon"><span className="x-mark">𝕏</span><h2>From the insider</h2></div><ExternalLink size={15}/></div><div className="insider-profile"><div className="avatar">EF</div><div><h3>Elliotte Friedman <span className="verified"><Check size={10}/></span></h3><a href="https://x.com/FriedgeHNIC" target="_blank" rel="noreferrer">@FriedgeHNIC</a></div></div><div ref={container} className="timeline-container"/>
-    {status !== 'ready' && <div className="embed-placeholder"><span className="large-x">𝕏</span><h3>The latest, straight from the source.</h3><p>Reporting and updates from Elliotte Friedman on X.</p><button className="primary-button" disabled={status === 'loading'} onClick={() => setStatus('loading')}>{status === 'loading' ? 'Connecting to X…' : status === 'unavailable' ? 'Try loading again' : 'Load X timeline'}<ArrowUpRight size={15}/></button><small>{status === 'unavailable' ? 'X could not display the timeline here. Open the profile below for updates.' : 'Loads content from X. Availability depends on X and your browser settings.'}</small></div>}
-    <div className="panel-foot"><span>Reporter updates · Not trade confirmation</span><a href="https://x.com/FriedgeHNIC" target="_blank" rel="noreferrer">Open X <ArrowUpRight size={13}/></a></div></section>;
-}
 function App() {
   const [version, setVersion] = useState(0);
   const trades = useData('/api/trades', version);
   const standings = useData('/api/standings', version);
-  const [team, setTeam] = useState('all');
   const [query, setQuery] = useState('');
   const [conference, setConference] = useState('All');
   const [expanded, setExpanded] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState(null);
   const [active, setActive] = useState('Dashboard');
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => { const timer = setInterval(() => setVersion(v => v + 1), 300_000); return () => clearInterval(timer); }, []);
   const teams = standings.data?.teams || [];
-  const filtered = (trades.data?.trades || []).filter(t => (team === 'all' || t.to.abbrev === team || t.from.abbrev === team) && `${t.to.name} ${t.from.name} ${t.received} ${t.sent}`.toLowerCase().includes(query.toLowerCase()));
+  const filtered = (trades.data?.trades || []).filter(t => `${t.to.name} ${t.from.name} ${t.received} ${t.sent}`.toLowerCase().includes(query.toLowerCase()));
   const rows = teams.filter(t => conference === 'All' || t.conference === conference);
-  const navigate = (name, id) => { setActive(name); document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  const navigate = (name, id) => { setActive(name); setMenuOpen(false); document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   const refresh = () => setVersion(v => v + 1);
-  return <><header className="topbar"><a className="brand" href="#dashboard" onClick={() => setActive('Dashboard')}><img src="/tape-to-tape.svg" width="56" height="56" alt=""/><span><small>NHL trade tracker</small></span></a><nav aria-label="Main navigation">{[['Dashboard', 'dashboard'], ['Trades', 'trades'], ['Standings', 'standings']].map(([name, id]) => <button key={name} className={active === name ? 'active' : ''} onClick={() => navigate(name, id)}>{name}</button>)}</nav><div className="season-badge"><span className="status-dot"/>{seasonLabel(currentYear)} season</div></header>
+  return <><header className="topbar"><a className="brand" href="#dashboard" onClick={() => { setActive('Dashboard'); setMenuOpen(false); }}><img src="/tape-to-tape.svg" width="56" height="56" alt=""/><span><small>NHL trade tracker</small></span></a><button className="menu-toggle" aria-label="Toggle navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(open => !open)}><Menu size={22}/></button><nav className={menuOpen ? 'mobile-open' : ''} aria-label="Main navigation">{[['Dashboard', 'dashboard'], ['Trades', 'trades'], ['Standings', 'standings']].map(([name, id]) => <button key={name} className={active === name ? 'active' : ''} onClick={() => navigate(name, id)}>{name}</button>)}</nav><div className="season-badge"><span className="status-dot"/>{seasonLabel(currentYear)} season</div></header>
     <main id="dashboard"><div className="page-heading"><div><h1>The trade desk.</h1></div><button className="refresh-button" onClick={refresh} disabled={trades.loading || standings.loading}><RefreshCw size={15} className={trades.loading || standings.loading ? 'spin' : ''}/>Refresh data</button></div>
     <div className="overview-strip"><div><span className="overview-icon"><ArrowLeftRight size={19}/></span><div><strong>{trades.data?.trades.length ?? '—'}</strong><span>Confirmed trades</span></div><small>Since July 1, {currentYear}</small></div><div><span className="overview-icon"><Trophy size={19}/></span><div><strong>{teams.length || '—'}</strong><span>Teams in the race</span></div><small>{teams.length && teams.every(t => t.gamesPlayed === 0) ? 'Regular season starts soon' : 'NHL regular season'}</small></div><div><span className="overview-icon"><ShieldCheck size={20}/></span><div><strong className="text-stat">Official sources</strong><span>Every trade linked to NHL.com</span></div><span className="source-pill">Verified source</span></div></div>
-    <div className="dashboard-grid"><div className="main-column"><section className="panel trades-panel" id="trades"><div className="section-heading"><div className="heading-icon"><ArrowLeftRight size={18}/><h2>Trade wire</h2><span className="count">{filtered.length}</span></div><span className="quiet-label">Confirmed deals only</span></div><div className="trade-toolbar"><div className="search-field"><Search size={16}/><input aria-label="Search trades" placeholder="Search players or teams…" value={query} onChange={e => { setQuery(e.target.value); setExpanded(false); }}/>{query && <button aria-label="Clear trade search" onClick={() => setQuery('')}><X size={14}/></button>}</div><div className="team-select"><ListFilter size={15}/><select aria-label="Filter trades by team" value={team} onChange={e => { setTeam(e.target.value); setExpanded(false); }}><option value="all">All teams</option>{[...teams].sort((a, b) => a.name.localeCompare(b.name)).map(t => <option key={t.abbrev} value={t.abbrev}>{t.name}</option>)}</select></div></div>
-      <Status state={trades}>{filtered.length === 0 && !trades.loading && <div className="empty-state">No trades match these filters.<button className="text-button" onClick={() => { setQuery(''); setTeam('all'); }}>Clear filters</button></div>}
-      {filtered.slice(0, expanded ? undefined : 4).map((trade, index) => <article className={`trade-item ${selectedTrade?.id === trade.id ? 'selected' : ''}`} key={trade.id}><div className="trade-meta"><time dateTime={trade.date}>{dateLabel(trade.date)}</time>{index === 0 && !query && team === 'all' && <span className="latest-tag">Latest</span>}<a href={trade.source} target="_blank" rel="noreferrer"><ShieldCheck size={12}/>NHL.com<ArrowUpRight size={12}/></a></div><div className="trade-teams"><div><Logo team={trade.to}/><h3>{trade.to.name}</h3></div><ArrowLeftRight size={17}/><div><Logo team={trade.from}/><h3>{trade.from.name}</h3></div></div><div className="trade-assets"><div><span>Receive</span><p>{trade.received}</p></div><div><span>Receive</span><p>{trade.sent}</p></div></div><button className="compare-link" onClick={() => { setSelectedTrade(trade); document.getElementById('compare')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>Compare players<ArrowUpRight size={13}/></button></article>)}</Status>
+    <div className="dashboard-grid"><div className="main-column"><section className="panel trades-panel" id="trades"><div className="section-heading"><div className="heading-icon"><ArrowLeftRight size={18}/><h2>Trade wire</h2><span className="count">{filtered.length}</span></div><span className="quiet-label">Confirmed deals only</span></div><div className="trade-toolbar"><div className="search-field"><Search size={16}/><input aria-label="Search trades" placeholder="Search players or teams…" value={query} onChange={e => { setQuery(e.target.value); setExpanded(false); }}/>{query && <button aria-label="Clear trade search" onClick={() => setQuery('')}><X size={14}/></button>}</div></div>
+      <Status state={trades}>{filtered.length === 0 && !trades.loading && <div className="empty-state">No trades match this search.<button className="text-button" onClick={() => setQuery('')}>Clear search</button></div>}
+      {filtered.slice(0, expanded ? undefined : 4).map((trade, index) => <article className={`trade-item ${selectedTrade?.id === trade.id ? 'selected' : ''}`} key={trade.id}><div className="trade-meta"><time dateTime={trade.date}>{dateLabel(trade.date)}</time>{index === 0 && !query && <span className="latest-tag">Latest</span>}<a href={trade.source} target="_blank" rel="noreferrer"><ShieldCheck size={12}/>NHL.com<ArrowUpRight size={12}/></a></div><div className="trade-teams"><div><Logo team={trade.to}/><h3>{trade.to.name}</h3></div><ArrowLeftRight size={17}/><div><Logo team={trade.from}/><h3>{trade.from.name}</h3></div></div><div className="trade-assets"><div><span>Receive</span><p>{trade.received}</p></div><div><span>Receive</span><p>{trade.sent}</p></div></div><button className="compare-link" onClick={() => { setSelectedTrade(trade); document.getElementById('compare')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>Compare players<ArrowUpRight size={13}/></button></article>)}</Status>
       {filtered.length > 4 && <button className="show-more" onClick={() => setExpanded(!expanded)}>{expanded ? 'Show fewer trades' : `View all ${filtered.length} trades`}<ChevronDown size={15} className={expanded ? 'rotated' : ''}/></button>}
       <div className="panel-foot"><span>Checked {trades.data?.fetchedAt ? new Date(trades.data.fetchedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '—'} · Refreshes every 5 min</span><a href={trades.data?.source || 'https://www.nhl.com/news/topic/trade-coverage/'} target="_blank" rel="noreferrer">Official tracker<ArrowUpRight size={13}/></a></div></section>
       <Comparison selectedTrade={selectedTrade} version={version}/></div>
-      <aside className="side-column"><section className="panel standings-panel" id="standings"><div className="section-heading"><div className="heading-icon"><Trophy size={18}/><h2>League standings</h2></div><span className="quiet-label">{standings.data?.season ? seasonLabel(Math.floor(standings.data.season / 10000)) : seasonLabel(currentYear)}</span></div><div className="segmented" aria-label="Standings conference">{['All', 'Eastern', 'Western'].map(c => <button aria-pressed={conference === c} className={conference === c ? 'selected' : ''} key={c} onClick={() => setConference(c)}>{c === 'All' ? 'League' : c === 'Eastern' ? 'Eastern' : 'Western'}</button>)}</div>{teams.length > 0 && teams.every(t => t.gamesPlayed === 0) && <p className="preseason-note">Preseason · Regular-season points start at zero.</p>}<Status state={standings}><div className="standings-scroll"><table><thead><tr><th scope="col">#</th><th scope="col">Team</th><th scope="col">GP</th><th scope="col">W–L–OT</th><th scope="col">PTS</th></tr></thead><tbody>{rows.map((t, i) => <tr key={t.abbrev}><td>{i + 1}</td><th scope="row"><Logo team={t} size={27}/><span title={t.name}>{t.abbrev}</span></th><td>{t.gamesPlayed}</td><td>{t.wins}–{t.losses}–{t.otLosses}</td><td className="points">{t.points}</td></tr>)}</tbody></table></div></Status><div className="panel-foot"><span>{standings.data?.date ? `As of ${dateLabel(standings.data.date)}` : 'Official NHL standings'}</span><a href="https://www.nhl.com/standings" target="_blank" rel="noreferrer">NHL.com<ArrowUpRight size={13}/></a></div></section><FriedmanFeed/></aside></div>
+      <aside className="side-column"><section className="panel standings-panel" id="standings"><div className="section-heading"><div className="heading-icon"><Trophy size={18}/><h2>League standings</h2></div><span className="quiet-label">{standings.data?.season ? seasonLabel(Math.floor(standings.data.season / 10000)) : seasonLabel(currentYear)}</span></div><div className="segmented" aria-label="Standings conference">{['All', 'Eastern', 'Western'].map(c => <button aria-pressed={conference === c} className={conference === c ? 'selected' : ''} key={c} onClick={() => setConference(c)}>{c === 'All' ? 'League' : c === 'Eastern' ? 'Eastern' : 'Western'}</button>)}</div>{teams.length > 0 && teams.every(t => t.gamesPlayed === 0) && <p className="preseason-note">Preseason · Regular-season points start at zero.</p>}<Status state={standings}><div className="standings-scroll"><table><thead><tr><th scope="col">#</th><th scope="col">Team</th><th scope="col">GP</th><th scope="col">W–L–OT</th><th scope="col">PTS</th></tr></thead><tbody>{rows.map((t, i) => <tr key={t.abbrev}><td>{i + 1}</td><th scope="row"><Logo team={t} size={27}/><span title={t.name}>{t.abbrev}</span></th><td>{t.gamesPlayed}</td><td>{t.wins}–{t.losses}–{t.otLosses}</td><td className="points">{t.points}</td></tr>)}</tbody></table></div></Status><div className="panel-foot"><span>{standings.data?.date ? `As of ${dateLabel(standings.data.date)}` : 'Official NHL standings'}</span><a href="https://www.nhl.com/standings" target="_blank" rel="noreferrer">NHL.com<ArrowUpRight size={13}/></a></div></section></aside></div>
     <footer><span className="footer-credit">Built by Jesse Little · <a href="https://studiolittle.ca" target="_blank" rel="noreferrer">studiolittle.ca</a></span></footer></main></>;
 }
 
