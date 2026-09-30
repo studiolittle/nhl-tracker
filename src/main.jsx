@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowLeftRight, ArrowUpRight, ChevronDown, CircleHelp, LayoutDashboard, CalendarDays, MoveRight, Menu, RefreshCw, Search, ShieldCheck, Trophy, X } from 'lucide-react';
+import { ArrowLeftRight, ArrowUpRight, ChevronDown, CircleHelp, LayoutDashboard, CalendarDays, MoveRight, Sun, Moon, Menu, RefreshCw, Search, ShieldCheck, Trophy, X } from 'lucide-react';
 import './styles.css';
 
+const teamColors = { ANA: '#f47a38', BOS: '#efb92b', BUF: '#3688dc', CAR: '#e14755', CBJ: '#507bbb', CGY: '#eb5358', CHI: '#e04f55', COL: '#a2597b', DAL: '#35ad83', DET: '#ec4c59', EDM: '#f58a42', FLA: '#d19757', LAK: '#a5abb5', MIN: '#55a68c', MTL: '#e45b71', NJD: '#e44e59', NSH: '#e3b538', NYI: '#f47f43', NYR: '#468cdd', OTT: '#de615c', PHI: '#f88146', PIT: '#e4c552', SEA: '#62b5c7', SJS: '#40b2b0', STL: '#5599e4', TBL: '#5698e8', TOR: '#4d8dda', UTA: '#79b8d2', VAN: '#55a0d4', VGK: '#bfaa79', WPG: '#6d9ec7', WSH: '#dc5c6b' };
+const teamStyle = team => ({ '--team-color': teamColors[team?.abbrev] || '#8b9aa8' });
 const currentYear = new Date().getUTCFullYear() - (new Date().getUTCMonth() < 6 ? 1 : 0);
 const seasonLabel = year => `${year}–${String(year + 1).slice(-2)}`;
 const dateLabel = date => new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -148,7 +150,7 @@ function Comparison({ selectedTrade, version, onReset, season, setSeason }) {
     {selectedTrade ? <div className="trade-context"><span><CalendarDays size={16}/>{dateLabel(selectedTrade.date)} trade</span><a href={selectedTrade.source} target="_blank" rel="noreferrer">View announcement <ArrowUpRight size={16}/></a></div> : <p className="section-description">Select a trade above or search for two players.</p>}
     <div className="comparison-layout"><div className="matchup-workspace">
       <div className="picker-row">{chosen.map((player, index) => <PlayerPicker key={index} label={index === 0 ? 'Player one' : 'Player two'} selected={player} onSelect={p => setChosen(old => old.map((value, i) => i === index ? p : value))}/>)}</div>
-      <div className="player-matchup">{chosen.map((player, index) => <div className={'player-profile' + (player?.asset ? ' asset-profile' : '')} key={index}>
+      <div className="player-matchup">{chosen.map((player, index) => <div className={'player-profile' + (player?.asset ? ' asset-profile' : '')} key={index} style={teamStyle(selectedTrade ? index === 0 ? selectedTrade.to : selectedTrade.from : { abbrev: players[index]?.team })}>
         <div className="player-details"><span>{player?.asset ? 'Trade return' : players[index]?.team ? `${players[index].team} / ${players[index].position}` : resolving ? 'Finding player…' : player?.id ? 'NHL player' : 'Player record unavailable'}</span><h3>{player?.name}</h3><small>{player?.asset ? 'Non-player asset' : players[index]?.team ? 'Current team' : 'Selected player'}</small></div>
         {players[index]?.headshot && !busy ? <img className="headshot" src={players[index].headshot} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden'; }}/> : <div className="profile-symbol" aria-hidden="true"><ArrowLeftRight size={32}/></div>}
       </div>)}<span className="versus">vs</span></div>
@@ -160,7 +162,7 @@ function Comparison({ selectedTrade, version, onReset, season, setSeason }) {
       })}</div>}
       {!busy && players.some(p => p && !p.hasStats) && <p className="comparison-message">No NHL regular-season stats for {players.filter(p => p && !p.hasStats).map(p => p.name).join(' and ')} in {seasonLabel(season)}.</p>}
     </div><div className="package-workspace"><h3>{selectedTrade ? 'The complete trade' : 'Compare the season'}</h3>{selectedTrade ? <>
-      {packages.map((side, index) => <div className="trade-package" key={index}><div className="package-team"><Logo team={index === 0 ? selectedTrade.to : selectedTrade.from} size={30}/><h4>{sideNames[index]}<span>Receive</span></h4></div><p className="package-description">{index === 0 ? selectedTrade.received : selectedTrade.sent}</p>{side.filter(p => !p.asset).map(player => {
+      {packages.map((side, index) => <div className="trade-package" key={index} style={teamStyle(index === 0 ? selectedTrade.to : selectedTrade.from)}><div className="package-team"><Logo team={index === 0 ? selectedTrade.to : selectedTrade.from} size={30}/><h4>{sideNames[index]}<span>Receive</span></h4></div><p className="package-description">{index === 0 ? selectedTrade.received : selectedTrade.sent}</p>{side.filter(p => !p.asset).map(player => {
         const stat = statsById.get(String(player.id));
         const metrics = stat?.position === 'G' ? [['gamesPlayed', 'GP'], ['wins', 'W'], ['savePct', 'SV%']] : [['gamesPlayed', 'GP'], ['goals', 'G'], ['assists', 'A'], ['points', 'PTS']];
         return <article className="trade-player-card" key={player.name}><strong>{player.name}</strong>{player.id ? <div className="trade-player-card-stats">{metrics.map(([key, label]) => <span key={key}><b>{busy ? '…' : formatStat(stat, key)}</b>{label}</span>)}</div> : <small>{resolving ? 'Finding player…' : 'No NHL player record available'}</small>}</article>;
@@ -173,6 +175,12 @@ function Comparison({ selectedTrade, version, onReset, season, setSeason }) {
   </section>;
 }
 function App() {
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'dark');
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#141517' : '#f4f5f6');
+    try { localStorage.setItem('tape-theme', theme); } catch { /* Theme still works when storage is unavailable. */ }
+  }, [theme]);
   const [version, setVersion] = useState(0);
   const [season, setSeason] = useState(currentYear - 1);
   const trades = useData('/api/trades', version);
@@ -202,7 +210,7 @@ function App() {
     <a className="brand" href="#dashboard" aria-label="Tape to Tape home" onClick={() => { setActive('Dashboard'); setMenuOpen(false); }}><img src="/tape-to-tape.svg" width="58" height="58" alt=""/><span>NHL trade tracker</span></a>
     <button className="menu-toggle" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-controls="main-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(open => !open)}>{menuOpen ? <X/> : <Menu/>}</button>
     <nav id="main-navigation" className={menuOpen ? 'mobile-open' : ''} aria-label="Main navigation">{navItems.map(([name, id, Icon]) => <button key={name} aria-current={active === name ? 'location' : undefined} className={active === name ? 'active' : ''} onClick={() => navigate(name, id)}><Icon size={20}/>{name}</button>)}</nav>
-    <div className="rail-bottom"><div className="rink-mark" aria-hidden="true"><span/><i/><span/></div><span>{seasonLabel(currentYear)} season</span><a href="https://www.nhl.com/news/topic/trade-coverage/" target="_blank" rel="noreferrer">Official NHL sources <ArrowUpRight size={14}/></a></div>
+    <button className="theme-toggle" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} onClick={() => setTheme(value => value === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={20}/> : <Moon size={20}/>}<span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button>
   </header><main id="dashboard"><div className="workspace-bar"><span>NHL / {seasonLabel(currentYear)}</span><span className={'sync-status' + (healthy ? ' healthy' : '')}><i/>{loading ? 'Checking sources' : healthy ? 'Data up to date' : 'Check source status'}</span></div>
     <div className="page-heading"><h1>The trade desk.</h1><button className="refresh-button" onClick={() => setVersion(v => v + 1)} disabled={loading}><RefreshCw size={17} className={loading ? 'spin' : ''}/>Refresh data</button></div>
     <div className="overview-strip"><div><span className="overview-icon"><ArrowLeftRight/></span><div><span>Confirmed trades</span><strong>{trades.data ? allTrades.length : '—'}</strong></div><small>Since July 1</small></div><div><span className="overview-icon"><Trophy/></span><div><span>Teams in the league</span><strong>{teams.length || '—'}</strong></div><small>Regular season</small></div><div><span className="overview-icon"><CalendarDays/></span><div><span>Latest trade</span><strong className="date-stat">{allTrades[0] ? dateLabel(allTrades[0].date) : '—'}</strong></div><small>{allTrades[0] ? `${allTrades[0].to.abbrev} / ${allTrades[0].from.abbrev}` : 'Awaiting source'}</small></div></div>
@@ -210,7 +218,7 @@ function App() {
       <div className="trade-toolbar"><div className="search-field"><Search size={18}/><input aria-label="Search trades" placeholder="Search players or teams" value={query} onChange={e => { setQuery(e.target.value); setExpanded(false); }}/>{query && <button aria-label="Clear trade search" onClick={() => setQuery('')}><X size={18}/></button>}</div><span className="sort-label">Newest first</span></div>
       <div className="trade-feed"><Status state={trades}>{filtered.length === 0 && !trades.loading && <div className="empty-state">No trades match this search.<button className="text-button" onClick={() => setQuery('')}>Clear search</button></div>}
         {filtered.slice(0, expanded ? undefined : 4).map((trade, index) => <article className={'trade-item' + (selectedTrade?.id === trade.id ? ' selected' : '')} key={trade.id}><div className="trade-meta"><time dateTime={trade.date}>{dateLabel(trade.date)}</time>{index === 0 && !query && <span className="latest-tag">Latest</span>}<a href={trade.source} target="_blank" rel="noreferrer">NHL.com <ArrowUpRight size={14}/></a></div>
-          <div className="trade-sides">{[[trade.to, trade.received], [trade.from, trade.sent]].map(([team, assets], i) => <div className="trade-side" key={i}><div className="trade-team"><Logo team={team} size={36}/><h3>{team.name}</h3></div><span className="receive-label">Receive</span><p>{assets}</p></div>)}<span className="trade-direction" aria-hidden="true"><ArrowLeftRight size={18}/></span></div>
+          <div className="trade-sides">{[[trade.to, trade.received], [trade.from, trade.sent]].map(([team, assets], i) => <div className="trade-side" key={i} style={teamStyle(team)}><div className="trade-team"><Logo team={team} size={36}/><h3>{team.name}</h3></div><span className="receive-label">Receive</span><p>{assets}</p></div>)}<span className="trade-direction" aria-hidden="true"><ArrowLeftRight size={18}/></span></div>
           <button className="compare-link" onClick={() => { setSelectedTrade({ ...trade }); navigate('Compare', 'compare'); }}>{selectedTrade?.id === trade.id ? 'View comparison' : 'Compare trade'}<MoveRight size={18}/></button></article>)}
       </Status></div>
       {filtered.length > 4 && <button className="show-more" onClick={() => setExpanded(!expanded)}>{expanded ? 'Show fewer trades' : `View all ${filtered.length} trades`}<ChevronDown size={16} className={expanded ? 'rotated' : ''}/></button>}
