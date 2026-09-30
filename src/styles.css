@@ -72,7 +72,7 @@ h1 { font: 600 3.5rem/1.05 'Barlow Condensed', sans-serif; letter-spacing: -.5px
 .heading-icon svg { width: 21px; color: var(--blue); }
 h2 { font-size: 1.375rem; line-height: 1.3; font-weight: 700; letter-spacing: -.45px; }
 .count { display: grid; place-items: center; border-radius: 5px; background: var(--surface-alt); padding: 2px 8px; color: var(--muted); font-size: .875rem; font-weight: 600; }
-.verified-label { color: var(--success); display: flex; align-items: center; gap: 5px; font-size: .8125rem; }
+.updated-label { color: var(--muted); font-size: .8125rem; }
 .quiet-label, .sort-label { color: var(--muted); font-size: .875rem; white-space: nowrap; }
 .trade-toolbar { padding: 0 24px 20px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid var(--line); }
 .search-field { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); background: var(--input); border-radius: 6px; min-height: 46px; min-width: 0; color: var(--muted); }
@@ -280,7 +280,7 @@ footer a { display: flex; align-items: center; gap: 4px; }
   .trade-team h3 { min-height: 44px; font-size: .9375rem; }
   .trade-sides { gap: 26px; }
   .trade-side p { font-size: .9375rem; }
-  .verified-label { font-size: .75rem; }
+  .updated-label { font-size: .75rem; }
   .panel-foot { padding-inline: 16px; }
   .segmented { margin-inline: 16px; }
   .matchup-workspace, .package-workspace { padding: 16px; }
@@ -339,7 +339,7 @@ h2 { font-size: 1.45rem; }
 .compare-link { border: 1px solid var(--line); padding: 9px 13px; border-radius: 6px; background: var(--surface-alt); margin-top: 16px; color: var(--text); }
 .compare-link:hover { border-color: var(--accent); text-decoration: none; }
 .trade-meta { font-size: .9375rem; }
-.trade-meta a, .latest-tag, .verified-label, .panel-foot, .workspace-bar, footer { font-size: .875rem; }
+.trade-meta a, .latest-tag, .updated-label, .panel-foot, .workspace-bar, footer { font-size: .875rem; }
 .trade-toolbar { padding-bottom: 24px; }
 .segmented .selected { color: var(--text); background: var(--line); box-shadow: none; }
 .standings-scroll { max-height: 865px; }
@@ -405,7 +405,7 @@ tbody th img { background: #f2f4f6; border-radius: 50%; padding: 2px; }
   .section-heading { padding: 20px; }
   .section-heading h2 { font-size: 1.3rem; }
   .trade-item { padding: 18px 20px; }
-  .trade-meta a, .latest-tag, .verified-label { font-size: .8125rem; }
+  .trade-meta a, .latest-tag, .updated-label { font-size: .8125rem; }
 }
 @media (max-width: 440px) {
   .topbar { padding-inline: 12px; gap: 8px; }
@@ -441,6 +441,18 @@ tbody th img { background: #f2f4f6; border-radius: 50%; padding: 2px; }
 .trades-page .comparison { margin-top: 0; }
 .trades-page .trade-feed, .standings-page .standings-scroll { max-height: none; }
 .standings-page .standings-panel { width: 100%; }
+
+.overview-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 0 0 20px; padding: 0 0 14px; border-bottom: 1px solid var(--line); }
+.overview-strip > div, .overview-strip > div:last-child { display: flex; align-items: baseline; gap: 8px; min-width: 0; min-height: 0; padding: 0 16px; border: 0; border-right: 1px solid var(--line); border-radius: 0; background: transparent; box-shadow: none; }
+.overview-strip > div:first-child { padding-left: 0; }
+.overview-strip > div:last-child { border-right: 0; }
+.overview-strip span:not(.overview-icon) { color: var(--muted); font-size: .8125rem; white-space: nowrap; }
+.overview-strip strong, .overview-strip .date-stat { color: var(--text); font: 600 1.5rem/1 'Barlow Condensed', sans-serif; white-space: nowrap; }
+@media (max-width: 760px) {
+  .overview-strip > div, .overview-strip > div:last-child { display: grid; align-content: start; gap: 4px; padding: 0 9px; }
+  .overview-strip span:not(.overview-icon) { min-height: 2.4em; white-space: normal; line-height: 1.2; }
+  .overview-strip strong, .overview-strip .date-stat { font-size: 1.35rem; }
+}
 @media (max-width: 760px) {
   .topbar nav.mobile-open { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .topbar nav.mobile-open button { flex-direction: column; gap: 4px; padding: 9px 4px; }
