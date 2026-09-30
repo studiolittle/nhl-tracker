@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowLeftRight, ArrowUpRight, CircleHelp, LayoutDashboard, MoveRight, Sun, Moon, Menu, RefreshCw, Search, Trophy, X } from 'lucide-react';
+import { ArrowLeftRight, ArrowUpRight, CircleHelp, LayoutDashboard, CalendarDays, MoveRight, Sun, Moon, Menu, RefreshCw, Search, ShieldCheck, Trophy, X } from 'lucide-react';
 import './styles.css';
 
 const teamColors = { ANA: '#f47a38', BOS: '#efb92b', BUF: '#3688dc', CAR: '#e14755', CBJ: '#507bbb', CGY: '#eb5358', CHI: '#e04f55', COL: '#a2597b', DAL: '#35ad83', DET: '#ec4c59', EDM: '#f58a42', FLA: '#d19757', LAK: '#a5abb5', MIN: '#55a68c', MTL: '#e45b71', NJD: '#e44e59', NSH: '#e3b538', NYI: '#f47f43', NYR: '#468cdd', OTT: '#de615c', PHI: '#f88146', PIT: '#e4c552', SEA: '#62b5c7', SJS: '#40b2b0', STL: '#5599e4', TBL: '#5698e8', TOR: '#4d8dda', UTA: '#79b8d2', VAN: '#55a0d4', VGK: '#bfaa79', WPG: '#6d9ec7', WSH: '#dc5c6b' };
@@ -176,8 +176,7 @@ function Comparison({ selectedTrade, version, onReset, onBrowseTrades, season, s
 }
 function TradeWire({ trades, filtered, query, setQuery, selectedTrade, onCompare, checked, full, onViewAll }) {
   const visible = full ? filtered : filtered.slice(0, 4);
-  const updated = trades.data?.fetchedAt ? new Date(trades.data.fetchedAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : null;
-  return <section className="panel trades-panel" id="trade-wire"><div className="section-heading"><div className="heading-icon"><h2>Trade wire</h2><span className="count">{filtered.length}</span></div><span className="updated-label">{updated ? `Updated ${updated}` : 'Updating…'}</span></div>
+  return <section className="panel trades-panel" id="trade-wire"><div className="section-heading"><div className="heading-icon"><h2>Trade wire</h2><span className="count">{filtered.length}</span></div><span className="verified-label"><ShieldCheck size={15}/>Confirmed</span></div>
     <div className="trade-toolbar"><div className="search-field"><Search size={18}/><input aria-label="Search trades" placeholder="Search players or teams" value={query} onChange={e => setQuery(e.target.value)}/>{query && <button aria-label="Clear trade search" onClick={() => setQuery('')}><X size={18}/></button>}</div><span className="sort-label">Newest first</span></div>
     <div className="trade-feed"><Status state={trades}>{filtered.length === 0 && !trades.loading && <div className="empty-state">No trades match this search.<button className="text-button" onClick={() => setQuery('')}>Clear search</button></div>}
       {visible.map((trade, index) => <article className={'trade-item' + (selectedTrade?.id === trade.id ? ' selected' : '')} key={trade.id}><div className="trade-meta"><time dateTime={trade.date}>{dateLabel(trade.date)}</time>{index === 0 && !query && <span className="latest-tag">Latest</span>}<a href={trade.source} target="_blank" rel="noreferrer">NHL.com <ArrowUpRight size={14}/></a></div>
@@ -251,7 +250,7 @@ function App() {
   </header><main id="dashboard"><div className="workspace-bar"><span>NHL / {seasonLabel(currentYear)}</span><span className={'sync-status' + (healthy ? ' healthy' : '')}><i/>{loading ? 'Checking sources' : healthy ? 'Data up to date' : 'Check source status'}</span></div>
     <div className="page-heading"><h1>{active === 'Home' ? 'The trade desk.' : active}</h1><button className="refresh-button" onClick={() => setVersion(v => v + 1)} disabled={loading}><RefreshCw size={17} className={loading ? 'spin' : ''}/>Refresh data</button></div>
     {active === 'Home' && <>
-      <div className="overview-strip" aria-label="League snapshot"><div><span>Trades since Jul 1</span><strong>{trades.data ? allTrades.length : '—'}</strong></div><div><span>NHL teams</span><strong>{teams.length || '—'}</strong></div><div><span>Latest trade</span><strong className="date-stat">{allTrades[0] ? dateLabel(allTrades[0].date) : '—'}</strong></div></div>
+      <div className="overview-strip"><div><span className="overview-icon"><ArrowLeftRight/></span><div><span>Confirmed trades</span><strong>{trades.data ? allTrades.length : '—'}</strong></div><small>Since July 1</small></div><div><span className="overview-icon"><Trophy/></span><div><span>Teams in the league</span><strong>{teams.length || '—'}</strong></div><small>Regular season</small></div><div><span className="overview-icon"><CalendarDays/></span><div><span>Latest trade</span><strong className="date-stat">{allTrades[0] ? dateLabel(allTrades[0].date) : '—'}</strong></div><small>{allTrades[0] ? `${allTrades[0].to.abbrev} / ${allTrades[0].from.abbrev}` : 'Awaiting source'}</small></div></div>
       <div className="dashboard-grid"><TradeWire trades={trades} filtered={filtered} query={query} setQuery={setQuery} selectedTrade={selectedTrade} onCompare={compareTrade} checked={checked} onViewAll={() => navigate('Trades')}/><StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} onViewAll={() => navigate('Standings')}/></div>
       <Comparison key={selectedTrade?.id || 'manual'} selectedTrade={selectedTrade} version={version} season={season} setSeason={setSeason} onReset={() => setSelectedTrade(null)} onBrowseTrades={() => navigate('Trades')}/>
     </>}
