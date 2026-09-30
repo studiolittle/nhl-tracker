@@ -32,6 +32,16 @@ test('comparisons combine traded-player team stints and exclude playoffs and oth
 test('missing season is represented as unavailable, not invented stats', () => {
   assert.equal(playerStats(player, 20262027).hasStats, false);
 });
+test('goalie save percentages use official values and weight traded stints by shots', () => {
+  const goalie = { ...player, position: 'G', seasonTotals: [
+    { season: 20252026, leagueAbbrev: 'NHL', gameTypeId: 2, gamesPlayed: 25, shotsAgainst: 670, goalsAgainst: 78, savePctg: 0.883582 },
+  ] };
+  assert.equal(playerStats(goalie, 20252026).savePct, 0.883582);
+  goalie.seasonTotals.push({ season: 20252026, leagueAbbrev: 'NHL', gameTypeId: 2, gamesPlayed: 10, shotsAgainst: 330, goalsAgainst: 22, savePctg: 0.933333 });
+  assert.equal(playerStats(goalie, 20252026).savePct, 0.9);
+  delete goalie.seasonTotals[1].goalsAgainst;
+  assert.equal(playerStats(goalie, 20252026).savePct, null);
+});
 test('season boundaries follow July 1 trade tracker rollover', () => {
   assert.equal(seasonStart(new Date('2026-06-30T23:00:00Z')), 2025);
   assert.equal(seasonStart(new Date('2026-07-01T00:00:00Z')), 2026);

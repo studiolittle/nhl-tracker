@@ -50,10 +50,15 @@ export function playerStats(player, season) {
     for (const key of ['gamesPlayed', 'goals', 'assists', 'points', 'wins', 'saves', 'shotsAgainst', 'goalsAgainst']) sum[key] = (sum[key] || 0) + (row[key] || 0);
     return sum;
   }, {});
+  const goalieRows = total ? [total] : rows;
+  const hasSaveTotals = goalieRows.length > 0 && goalieRows.every(row => Number.isFinite(row.shotsAgainst) && (Number.isFinite(row.saves) || Number.isFinite(row.goalsAgainst)));
+  const shotsAgainst = goalieRows.reduce((sum, row) => sum + (row.shotsAgainst || 0), 0);
+  const saves = goalieRows.reduce((sum, row) => sum + (row.saves ?? (row.shotsAgainst - row.goalsAgainst)), 0);
+  const savePct = (goalieRows.length === 1 ? goalieRows[0].savePctg : null) ?? (hasSaveTotals && shotsAgainst > 0 ? saves / shotsAgainst : null);
   return {
     id: player.playerId, name: `${player.firstName.default} ${player.lastName.default}`, position: player.position,
     headshot: player.headshot, team: player.currentTeamAbbrev, season, hasStats: rows.length > 0,
     gamesPlayed: stats.gamesPlayed || 0, goals: stats.goals || 0, assists: stats.assists || 0, points: stats.points || 0,
-    wins: stats.wins || 0, savePct: stats.savePctg ?? (stats.shotsAgainst ? stats.saves / stats.shotsAgainst : null),
+    wins: stats.wins || 0, savePct,
   };
 }
