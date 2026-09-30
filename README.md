@@ -44,6 +44,6 @@ The app is deployed on Vercel. It has no accounts, notifications, or persistent 
 
 The product name is Puck Haul. The plain-text header intentionally has no logo. The existing repository and Vercel project keep their technical names.
 
-The public origin is https://nhl-tracker-alpha.vercel.app/. Titles, descriptions, canonical URL, Open Graph and Twitter cards, and WebSite JSON-LD are in index.html. The sharing image is public/puck-haul-social.png. public/robots.txt references public/sitemap.xml.
+The public origin is https://puckhaul.app/. Titles, descriptions, canonical URL, Open Graph and Twitter cards, and WebSite JSON-LD are in index.html. The sharing image is public/puck-haul-social.png. public/robots.txt references public/sitemap.xml.
 
-After connecting a custom domain, update all public-origin references in index.html, public/robots.txt, public/sitemap.xml, and this README together. Do not point canonical or sharing URLs at an unregistered domain. The old theme storage key is read only to migrate existing visitors’ preferences.
+The old theme storage key is read only to migrate existing visitors' preferences.

@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://nhl-tracker-alpha.vercel.app/sitemap.xml
+Sitemap: https://puckhaul.app/sitemap.xml
