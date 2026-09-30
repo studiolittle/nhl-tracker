@@ -34,7 +34,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .brand { display: flex; flex-direction: column; align-items: flex-start; gap: 13px; padding: 0 12px; }
 .brand img { width: 64px; height: 64px; }
 .brand span { font-size: .875rem; color: var(--muted); }
-.brand:hover { color: var(--surface); }
+.brand:hover { color: var(--text); }
 .topbar nav { display: flex; flex-direction: column; gap: 8px; margin-top: 46px; }
 .topbar nav button { display: flex; align-items: center; gap: 12px; text-align: left; min-height: 48px; padding: 12px; background: transparent; border: 0; border-radius: 7px; color: var(--muted); font-weight: 500; }
 .topbar nav button:hover { background: var(--surface-alt); color: var(--surface); }
@@ -302,7 +302,7 @@ footer a { display: flex; align-items: center; gap: 4px; }
 /* Dark-first workspace: compact top navigation and team-colored trade packages. */
 html { scroll-padding-top: 104px; }
 .topbar { position: sticky; inset: 0 0 auto; width: 100%; min-height: 82px; padding: 14px max(28px, calc((100vw - 1440px) / 2)); background: var(--canvas); border-bottom: 1px solid var(--line); flex-direction: row; align-items: center; gap: 36px; }
-.brand { flex-direction: row; align-items: center; padding: 0; gap: 14px; flex-shrink: 0; }
+.brand { flex-direction: row; align-items: center; padding: 0; flex-shrink: 0; font-size: 1.125rem; font-weight: 500; color: var(--text); min-height: 44px; }
 .brand img { width: 48px; height: 48px; }
 .brand span { display: block; font-size: .9375rem; color: var(--text-secondary); }
 .topbar nav { display: flex; flex-direction: row; margin: 0 auto; gap: 8px; }

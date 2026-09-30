@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://nhl-tracker-alpha.vercel.app/sitemap.xml

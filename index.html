@@ -1,2 +1,62 @@
 <!doctype html>
-<html lang="en" data-theme="dark"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#141517"/><meta name="description" content="Tape to Tape: follow confirmed NHL trades, compare players, and track the standings. Official sources, one simple dashboard."/><title>Tape to Tape — NHL trade tracker</title><link rel="icon" type="image/svg+xml" href="/tape-to-tape.svg"/><script>try{var savedTheme=localStorage.getItem('tape-theme');if(savedTheme==='light'||savedTheme==='dark')document.documentElement.dataset.theme=savedTheme;}catch(e){}</script></head><body><div id="root"></div><script type="module" src="/src/main.jsx"></script></body></html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="theme-color" content="#141517"/>
+    <title>Puck Haul | NHL Trades, Player Comparisons & Standings</title>
+    <meta name="description" content="Track confirmed NHL trades with Puck Haul. Compare player stats, explore complete trade packages, and follow league standings with links to official NHL sources."/>
+    <meta name="application-name" content="Puck Haul"/>
+    <meta name="robots" content="index, follow, max-image-preview:large"/>
+    <link rel="canonical" href="https://nhl-tracker-alpha.vercel.app/"/>
+    <link rel="icon" href="data:,"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:site_name" content="Puck Haul"/>
+    <meta property="og:locale" content="en_CA"/>
+    <meta property="og:title" content="Puck Haul | NHL Trades, Player Comparisons & Standings"/>
+    <meta property="og:description" content="Track confirmed NHL trades, compare player stats, and explore every player and pick in the deal. Follow the standings with official NHL sources."/>
+    <meta property="og:url" content="https://nhl-tracker-alpha.vercel.app/"/>
+    <meta property="og:image" content="https://nhl-tracker-alpha.vercel.app/puck-haul-social.png"/>
+    <meta property="og:image:type" content="image/png"/>
+    <meta property="og:image:width" content="1200"/>
+    <meta property="og:image:height" content="630"/>
+    <meta property="og:image:alt" content="Puck Haul — NHL trades, player comparisons, and standings."/>
+    <meta name="twitter:card" content="summary_large_image"/>
+    <meta name="twitter:title" content="Puck Haul | NHL Trades, Player Comparisons & Standings"/>
+    <meta name="twitter:description" content="Track confirmed NHL trades, compare player stats, and explore complete trade packages and league standings."/>
+    <meta name="twitter:image" content="https://nhl-tracker-alpha.vercel.app/puck-haul-social.png"/>
+    <meta name="twitter:image:alt" content="Puck Haul — NHL trades, player comparisons, and standings."/>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "@id": "https://nhl-tracker-alpha.vercel.app/#website",
+        "name": "Puck Haul",
+        "url": "https://nhl-tracker-alpha.vercel.app/",
+        "description": "An independent NHL dashboard for confirmed trades, player comparisons, complete trade packages, and league standings.",
+        "inLanguage": "en-CA",
+        "image": "https://nhl-tracker-alpha.vercel.app/puck-haul-social.png"
+      }
+    </script>
+    <script>
+      try {
+        var savedTheme = localStorage.getItem('puck-haul-theme') || localStorage.getItem('tape-theme');
+        if (savedTheme === 'light' || savedTheme === 'dark') document.documentElement.dataset.theme = savedTheme;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <main>
+        <h1>Puck Haul</h1>
+        <p>Track confirmed NHL trades, compare player statistics, and follow league standings.</p>
+        <p>Explore complete trade packages, including players, draft picks, and future considerations. Puck Haul links to official NHL sources.</p>
+        <p>Enable JavaScript to load the interactive dashboard and current statistics.</p>
+        <a href="https://www.nhl.com/news/topic/trade-coverage/">Official NHL trade coverage</a>
+        <a href="https://www.nhl.com/standings">NHL standings</a>
+      </main>
+    </noscript>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

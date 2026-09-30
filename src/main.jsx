@@ -179,7 +179,7 @@ function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#141517' : '#f4f5f6');
-    try { localStorage.setItem('tape-theme', theme); } catch { /* Theme still works when storage is unavailable. */ }
+    try { localStorage.setItem('puck-haul-theme', theme); } catch { /* Theme still works when storage is unavailable. */ }
   }, [theme]);
   const [version, setVersion] = useState(0);
   const [season, setSeason] = useState(currentYear - 1);
@@ -207,7 +207,7 @@ function App() {
   const healthy = trades.data && standings.data && !trades.data.stale && !standings.data.stale;
   const checked = trades.data?.fetchedAt ? new Date(trades.data.fetchedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '—';
   return <div className="app-shell"><a className="skip-link" href="#dashboard">Skip to dashboard</a><header className="topbar">
-    <a className="brand" href="#dashboard" aria-label="Tape to Tape home" onClick={() => { setActive('Dashboard'); setMenuOpen(false); }}><img src="/tape-to-tape.svg" width="58" height="58" alt=""/><span>NHL trade tracker</span></a>
+    <a className="brand" href="#dashboard" aria-label="Puck Haul home" onClick={() => { setActive('Dashboard'); setMenuOpen(false); }}>puck haul</a>
     <button className="menu-toggle" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-controls="main-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(open => !open)}>{menuOpen ? <X/> : <Menu/>}</button>
     <nav id="main-navigation" className={menuOpen ? 'mobile-open' : ''} aria-label="Main navigation">{navItems.map(([name, id, Icon]) => <button key={name} aria-current={active === name ? 'location' : undefined} className={active === name ? 'active' : ''} onClick={() => navigate(name, id)}><Icon size={20}/>{name}</button>)}</nav>
     <button className="theme-toggle" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} onClick={() => setTheme(value => value === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={20}/> : <Moon size={20}/>}<span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button>
