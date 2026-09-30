@@ -202,6 +202,8 @@ tbody tr:hover { background: #f6fafd; }
 .notice { font-size: 1rem; padding: 15px 26px; line-height: 1.6; background: #fff7e8; color: #7d5d28; }
 .text-button { border: 0; background: transparent; color: var(--blue); font-size: 1rem; min-height: 44px; }
 footer { display: flex; flex-wrap: wrap; align-items: center; border-top: 1px solid #dce5ec; margin-top: 42px; padding: 28px 0 34px; gap: 18px 24px; color: var(--muted); font-size: var(--text-small); }
+.footer-credit { display: block; }
+.footer-credit a { color: #315d7c; }
 .footer-brand { display: flex; align-items: center; gap: 10px; font: 600 1.625rem/1.2 'Barlow Condensed', sans-serif; color: var(--navy); white-space: nowrap; }
 footer > a:last-child { margin-left: auto; display: flex; gap: 5px; align-items: center; }
 .spin { animation: spin 1.2s linear infinite; }
