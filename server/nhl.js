@@ -62,3 +62,11 @@ export function playerStats(player, season) {
     wins: stats.wins || 0, savePct,
   };
 }
+
+// A player counts as an NHL player when he has appeared in NHL regular-season or
+// playoff games in the previous or current season, which covers players who are
+// on an NHL roster and players who were just assigned to the minors.
+export function hasRecentNhlGames(player, year = seasonStart()) {
+  const earliest = (year - 1) * 10000 + year;
+  return (player.seasonTotals || []).some(row => row.leagueAbbrev === 'NHL' && row.season >= earliest && (row.gamesPlayed || 0) > 0);
+}

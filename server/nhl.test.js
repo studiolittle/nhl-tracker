@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { extractTradePlayers, parseTrades, playerStats, seasonStart } from './nhl.js';
+import { extractTradePlayers, hasRecentNhlGames, parseTrades, playerStats, seasonStart } from './nhl.js';
 
 test('trade assets expose every named player while excluding draft picks', () => {
   assert.deepEqual(extractTradePlayers('forwards Dylan Cozens and Dennis Gilbert and a 2nd-round pick in the 2026 NHL Draft'), ['Dylan Cozens', 'Dennis Gilbert']);
@@ -49,4 +49,10 @@ test('season boundaries follow July 1 trade tracker rollover', () => {
 test('team filters match accented NHL team names to tracker names', () => {
   const result = parseTrades('<p>JULY 1: Montreal Canadiens acquire forward Test Player from the Ottawa Senators for future considerations.</p>', 2026, [{ name: 'Montréal Canadiens', abbrev: 'MTL' }]);
   assert.equal(result[0].to.abbrev, 'MTL');
+});
+test('players with recent NHL games count as NHL players, minor-league-only players do not', () => {
+  const row = (season, leagueAbbrev, gamesPlayed) => ({ season, leagueAbbrev, gamesPlayed });
+  assert.equal(hasRecentNhlGames({ seasonTotals: [row(20252026, 'NHL', 3), row(20252026, 'AHL', 60)] }, 2026), true);
+  assert.equal(hasRecentNhlGames({ seasonTotals: [row(20252026, 'AHL', 60), row(20232024, 'NHL', 40)] }, 2026), false);
+  assert.equal(hasRecentNhlGames({ seasonTotals: [] }, 2026), false);
 });

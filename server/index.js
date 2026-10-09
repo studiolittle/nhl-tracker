@@ -1,7 +1,7 @@
 import express from 'express';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { seasonStart, trackerUrl, parseTrades, playerStats } from './nhl.js';
+import { seasonStart, trackerUrl, parseTrades, playerStats, hasRecentNhlGames } from './nhl.js';
 
 const app = express();
 export default app;
@@ -43,11 +43,33 @@ async function standings() {
 }
 const route = fn => async (req, res) => { try { res.json(await fn(req)); } catch (error) { console.error(error.message); res.status(502).json({ error: 'The NHL source is temporarily unavailable. Please try again.' }); } };
 app.get('/api/standings', route(() => standings()));
+const normalizeName = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+// Resolves to true/false, or null when the NHL lookup failed (callers keep the trade in that case).
+async function isNhlPlayer(name, year) {
+  try {
+    const { isNhl } = await cached(`nhl-status-${year}-${normalizeName(name)}`, async () => {
+      const results = await fetchNhl(`https://search.d3.nhle.com/api/v1/search/player?culture=en-us&limit=100&q=${encodeURIComponent(name.split(/\s+/).at(-1))}`);
+      const matches = results.filter(p => normalizeName(p.name) === normalizeName(name)).sort((a, b) => Number(b.active) - Number(a.active));
+      if (!matches.length) return { isNhl: false };
+      const landings = await Promise.all(matches.slice(0, 3).map(p => fetchNhl(`https://api-web.nhle.com/v1/player/${p.playerId}/landing`)));
+      return { isNhl: landings.some(player => hasRecentNhlGames(player, year)) };
+    }, 86_400_000);
+    return isNhl;
+  } catch { return null; }
+}
+async function onlyNhlTrades(trades, year) {
+  const names = [...new Set(trades.flatMap(t => [...t.receivedPlayers, ...t.sentPlayers]))];
+  const status = new Map();
+  for (let i = 0; i < names.length; i += 8) {
+    await Promise.all(names.slice(i, i + 8).map(async name => status.set(name, await isNhlPlayer(name, year))));
+  }
+  return trades.filter(t => [...t.receivedPlayers, ...t.sentPlayers].some(name => status.get(name) !== false));
+}
 app.get('/api/trades', route(async () => {
   const year = seasonStart();
   return cached(`trades-${year}`, async () => {
     const [html, table] = await Promise.all([fetchNhl(trackerUrl(year), false), standings()]);
-    const trades = parseTrades(html, year, table.teams);
+    const trades = await onlyNhlTrades(parseTrades(html, year, table.teams), year);
     if (!trades.length) throw new Error('No trades could be read from the official tracker');
     return { season: `${year}–${String(year + 1).slice(-2)}`, trades, source: trackerUrl(year) };
   });
