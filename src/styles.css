@@ -309,7 +309,7 @@ footer a { display: flex; align-items: center; gap: 4px; }
 .totals-side strong small { font-size: 1.25rem; color: var(--text-secondary); font-weight: 500; }
 .totals-detail { font-size: .9375rem; color: var(--text-secondary); }
 .takeaway { margin-top: 16px; font: 600 1.625rem/1.2 'Barlow Condensed', sans-serif; text-wrap: balance; }
-.totals-note { margin-top: 6px; font-size: .875rem; color: var(--muted); }
+.totals-note { margin-top: 8px; font-size: .875rem; color: var(--text-secondary); }
 .matchup-note { margin-bottom: 12px; font-size: .875rem; color: var(--muted); }
 .change-players { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 8px; }
 .change-players .picker-row { margin: 12px 0 0; }
@@ -352,3 +352,6 @@ tbody .points { padding-right: 6px; }
 .trade-context > *, .trade-context span { white-space: nowrap; }
 .standings-page:not(.two-up) .standings-panel { max-width: 760px; }
 .panel-foot a, footer a, .latest-head a { min-height: 44px; }
+.totals-coverage { margin-top: 2px; font-size: .875rem; font-weight: 600; color: var(--text-secondary); }
+.trade-player-card > .card-reason { display: block; margin-top: 8px; font-size: .875rem; color: var(--text-secondary); }
+.totals-note { max-width: 72ch; }
