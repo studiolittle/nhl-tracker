@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { ArrowLeft, ArrowLeftRight, ArrowUpRight, CircleHelp, LayoutDashboard, CalendarDays, ChevronDown, MoveRight, Sun, Moon, Menu, RefreshCw, Search, ShieldCheck, Trophy, X } from 'lucide-react';
 import './styles.css';
 import PlayerPicker from './PlayerPicker.jsx';
+import SeasonHome, { useHomeFeed } from './SeasonHome.jsx';
 
 const teamColors = { ANA: '#f47a38', BOS: '#efb92b', BUF: '#3688dc', CAR: '#e14755', CBJ: '#507bbb', CGY: '#eb5358', CHI: '#e04f55', COL: '#a2597b', DAL: '#35ad83', DET: '#ec4c59', EDM: '#f58a42', FLA: '#d19757', LAK: '#a5abb5', MIN: '#55a68c', MTL: '#e45b71', NJD: '#e44e59', NSH: '#e3b538', NYI: '#f47f43', NYR: '#468cdd', OTT: '#de615c', PHI: '#f88146', PIT: '#e4c552', SEA: '#62b5c7', SJS: '#40b2b0', STL: '#5599e4', TBL: '#5698e8', TOR: '#4d8dda', UTA: '#79b8d2', VAN: '#55a0d4', VGK: '#bfaa79', WPG: '#6d9ec7', WSH: '#dc5c6b' };
 const teamStyle = team => ({ '--team-color': teamColors[team?.abbrev] || '#8b9aa8' });
@@ -306,6 +307,7 @@ function App() {
   const [season, setSeason] = useState(currentYear);
   const trades = useData('/api/trades', version);
   const standings = useData('/api/standings', version);
+  const calendar = useHomeFeed('/api/season', version);
   const [query, setQuery] = useState('');
   const [conference, setConference] = useState('All');
   const [selectedId, setSelectedId] = useState(tradeIdFromHash);
@@ -360,12 +362,9 @@ function App() {
     <button className="menu-toggle" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-controls="main-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(open => !open)}>{menuOpen ? <X/> : <Menu/>}</button>
     <nav id="main-navigation" className={menuOpen ? 'mobile-open' : ''} aria-label="Main navigation">{navItems.map(([name, Icon]) => <button key={name} aria-current={active === name ? 'page' : undefined} className={active === name ? 'active' : ''} onClick={() => navigate(name)}><Icon size={20}/>{name}</button>)}</nav>
     <button className="theme-toggle" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} onClick={() => setTheme(value => value === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={20}/> : <Moon size={20}/>}<span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button>
-  </header><main id="dashboard" ref={mainRef} tabIndex="-1"><div className="workspace-bar"><span>NHL / {seasonLabel(currentYear)}</span><span role="status" aria-live="polite" aria-atomic="true" className={'sync-status' + (healthy ? ' healthy' : '')}><i/>{loading ? 'Checking sources' : healthy ? `Data up to date${checked ? ` · checked ${checked}` : ''}` : 'Check source status'}</span></div>
-    <div className="page-heading"><h1 ref={headingRef} tabIndex="-1">{active === 'Home' ? 'The trade desk.' : active}</h1><button className="refresh-button" onClick={() => setVersion(v => v + 1)} disabled={loading}><RefreshCw size={17} className={loading ? 'spin' : ''}/>Refresh data</button></div>
-    {active === 'Home' && <>
-      {allTrades[0] && <LatestTrade trade={allTrades[0]} onCompare={compareTrade}/>}
-      <div className="dashboard-grid"><TradeWire trades={trades} filtered={filtered} query={query} setQuery={setQuery} selectedTrade={selectedTrade} onCompare={compareTrade} skipFirst={!query && allTrades.length > 0} onViewAll={() => navigate('Trades')}/><StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} onViewAll={() => navigate('Standings')}/></div>
-    </>}
+  </header><main id="dashboard" ref={mainRef} tabIndex="-1"><div className="workspace-bar"><span>NHL / {seasonLabel(currentYear)}</span><span role="status" aria-live="polite" aria-atomic="true" className={'sync-status' + (active !== 'Home' && healthy ? ' healthy' : '')}><i/>{active === 'Home' ? 'Updates automatically' : loading ? 'Checking sources' : healthy ? `Data up to date${checked ? ` · checked ${checked}` : ''}` : 'Check source status'}</span></div>
+    <div className="page-heading"><div><h1 ref={headingRef} tabIndex="-1">{active === 'Home' ? calendar.data?.phase === 'playoffs' ? 'Stanley Cup Playoffs' : calendar.data?.phase === 'offseason' ? 'NHL offseason' : 'NHL scores & where to watch' : active}</h1></div></div>
+    {active === 'Home' && <SeasonHome calendar={calendar} version={version} trades={trades} onCompare={compareTrade} onBrowseTrades={() => navigate('Trades')} offseasonTrade={allTrades[0] && <LatestTrade trade={allTrades[0]} onCompare={compareTrade}/>} standingsPanel={<StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} onViewAll={() => navigate('Standings')}/>}/>}
     {active === 'Trades' && <div className="trades-page"><div className="trade-tabs" aria-label="Trades views"><button aria-pressed={tradeTab === 'wire'} className={tradeTab === 'wire' ? 'selected' : ''} onClick={() => navigate('Trades')}>Trade wire</button><button aria-pressed={tradeTab === 'compare'} className={tradeTab === 'compare' ? 'selected' : ''} onClick={() => navigate('Trades', 'compare', selectedId, true)}>Compare</button></div>{tradeTab === 'wire' ? <TradeWire trades={trades} filtered={filtered} query={query} setQuery={setQuery} selectedTrade={selectedTrade} onCompare={compareTrade} full/> : pendingTrade && trades.loading ? <div className="panel"><Status state={trades}/></div> : <>{pendingTrade && <div className="notice" role="status">That trade is no longer on the wire. You can still compare any two players.</div>}{comparison}</>}</div>}
     {active === 'Standings' && <div className="standings-page"><StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} full/></div>}
     <footer><span>Built by Jesse Little · Puck Haul is in alpha, so features and data may change.</span><a href="https://studiolittle.ca" target="_blank" rel="noreferrer">studiolittle.ca <ArrowUpRight size={15}/></a></footer>

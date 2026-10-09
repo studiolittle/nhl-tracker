@@ -2,6 +2,7 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { seasonStart, trackerUrl, parseTrades, playerStats, hasRecentNhlGames } from './nhl.js';
+import { easternDate, getSeasonContext, normalizeGames, normalizePlayoffSeries, parsePlayerNews } from './home.js';
 
 const app = express();
 export default app;
@@ -43,6 +44,43 @@ async function standings() {
 }
 const route = (fn, cacheControl) => async (req, res) => { try { const body = await fn(req); if (cacheControl && !body.stale) res.set('Cache-Control', cacheControl); res.json(body); } catch (error) { console.error(error.message); res.status(502).json({ error: 'The NHL source is temporarily unavailable. Please try again.' }); } };
 app.get('/api/standings', route(() => standings()));
+async function seasonCalendar() {
+  return cached('season-calendar', () => fetchNhl('https://api-web.nhle.com/v1/schedule/now'), 3_600_000);
+}
+app.get('/api/season', route(async () => {
+  const calendar = await seasonCalendar();
+  return { ...getSeasonContext(calendar), stale: calendar.stale, fetchedAt: calendar.fetchedAt };
+}));
+app.get('/api/scores', route(async req => {
+  const requested = String(req.query.date || 'now');
+  const today = easternDate();
+  if (requested !== 'now' && (!/^\d{4}-\d{2}-\d{2}$/.test(requested) || !Number.isFinite(Date.parse(requested)) || Math.abs(Date.parse(requested) - Date.parse(today)) > 370 * 86_400_000 || new Date(requested).toISOString().slice(0, 10) !== requested)) {
+    return { error: 'Choose a valid game date within one year of today.', games: [] };
+  }
+  // Date-bounded cache keys; current scores expire after 30 seconds.
+  return cached(`scores-${requested === 'now' ? today : requested}`, async () => {
+    const targetDate = requested === 'now' ? today : requested;
+    const [score, table] = await Promise.all([fetchNhl(`https://api-web.nhle.com/v1/score/${targetDate}`), standings().catch(() => ({ teams: [] }))]);
+    if (!Array.isArray(score.games) || score.currentDate !== targetDate) throw new Error('NHL scores unavailable for the requested date');
+    return { date: score.currentDate, today, games: normalizeGames(score, { date: score.currentDate, teams: table.teams }), source: 'https://www.nhl.com/scores',
+      days: (score.gameWeek || []).map(day => ({ date: day.date, numberOfGames: day.numberOfGames })) };
+  }, 30_000);
+}));
+app.get('/api/playoffs', route(async () => {
+  const calendar = await seasonCalendar();
+  const context = getSeasonContext(calendar);
+  if (context.phase !== 'playoffs') return { series: [], season: context.season, phase: context.phase };
+  return cached(`playoffs-${context.playoffYear}`, async () => {
+    const data = await fetchNhl(`https://api-web.nhle.com/v1/playoff-bracket/${context.playoffYear}`);
+    if (!Array.isArray(data.series)) throw new Error('NHL playoff series unavailable');
+    return { series: normalizePlayoffSeries(data), season: context.season, source: 'https://www.nhl.com/stanley-cup-playoffs' };
+  }, 60_000);
+}));
+app.get('/api/updates', route(() => cached('player-updates', async () => {
+  const html = await fetchNhl('https://www.nhl.com/news/', false);
+  const updates = parsePlayerNews(html);
+  return { updates, source: 'https://www.nhl.com/news/' };
+}, 300_000)));
 const normalizeName = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 // Resolves to true/false, or null when the NHL lookup failed (callers keep the trade in that case).
 async function isNhlPlayer(name, year) {

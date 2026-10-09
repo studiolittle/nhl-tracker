@@ -1,5 +1,5 @@
 :root {
-  --logo-chip: #f2f4f6; --shadow-pop: 0 12px 28px #0004;
+  --shadow-pop: 0 12px 28px #0004;
   font-family: 'DM Sans', sans-serif; font-size: 16px; font-synthesis: none;
   color-scheme: dark; --canvas: #141517; --surface: #1c1e21; --surface-alt: #26292d;
   --input: #17191c; --text: #f2f3f5; --text-secondary: #d0d4da; --muted: #a7aeb8;
@@ -107,8 +107,7 @@ h2 { font-size: 1.45rem; line-height: 1.3; font-weight: 700; letter-spacing: -.4
 .trade-side { min-width: 0; padding: 16px; border: 1px solid color-mix(in srgb, var(--team-ink, var(--team-color)) 38%, var(--line)); border-radius: 7px; background: color-mix(in srgb, var(--team-ink, var(--team-color)) 8%, var(--input)); }
 .trade-team { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .trade-team h3 { font-size: 1.0625rem; font-weight: 700; line-height: 1.3; }
-.team-logo { object-fit: contain; flex-shrink: 0; background: var(--logo-chip); border-radius: 50%; padding: 3px; box-shadow: 0 0 0 2px var(--team-ink, var(--team-color, var(--line))); }
-:root[data-theme="light"] .team-logo { box-shadow: 0 0 0 2px color-mix(in srgb, var(--team-ink, var(--team-color, var(--line))) 72%, #20252c); }
+.team-logo { object-fit: contain; flex-shrink: 0; }
 .team-fallback { font-size: .75rem; color: var(--muted); flex-shrink: 0; }
 .trade-side p { font-size: 1rem; color: var(--text-secondary); line-height: 1.65; margin-top: 12px; overflow-wrap: anywhere; }
 .trade-direction { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; padding: 5px; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--muted); z-index: 1; }
@@ -128,7 +127,7 @@ thead th { background: var(--surface); font-size: .8125rem; font-weight: 500; co
 thead th:nth-child(2) { text-align: left; }
 tbody td, tbody th { border-bottom: 1px solid var(--line); padding: 14px 6px; white-space: nowrap; }
 tbody th { text-align: left; font-weight: 600; font-size: 1rem; }
-tbody th img { vertical-align: middle; margin-right: 9px; background: var(--logo-chip); border-radius: 50%; padding: 2px; }
+tbody th img { vertical-align: middle; margin-right: 9px; }
 tbody th .team-fallback { vertical-align: middle; margin-right: 9px; }
 tbody td { text-align: right; font-size: 1rem; color: var(--muted); }
 tbody td:first-child { width: 25px; font-size: .8125rem; }
