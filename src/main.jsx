@@ -225,7 +225,7 @@ function Comparison({ selectedTrade, version, onReset, onBrowseTrades, season, s
       <p className="totals-note">How this works: we add up points and games for the skaters named in the trade ({seasonLabel(season)} regular season) and compare points per game. Goalies, draft picks and players without NHL games aren’t counted, and we won’t call it before the two sides have played 30 games combined.</p>
       </details>
     </div>}{selectedTrade ? <details className="package-disclosure" ref={packageRef} open={packageOpen} onToggle={event => setPackageOpen(event.currentTarget.open)}><summary>The complete trade <ChevronDown size={18}/></summary><div className="package-body">
-      {packages.map((side, index) => <div className="trade-package" key={index} style={teamStyle(sideTeams[index])}><div className="package-team"><Logo team={index === 0 ? selectedTrade.to : selectedTrade.from} size={30}/><h4>{sideNames[index]}<span>gets</span></h4></div><HaulBadges text={index === 0 ? selectedTrade.received : selectedTrade.sent} players={sidePlayers(selectedTrade, index === 0 ? 'to' : 'from')}/><p className="package-description">{index === 0 ? selectedTrade.received : selectedTrade.sent}</p>{side.filter(p => !p.asset).map(player => {
+      {packages.map((side, index) => <div className="trade-package" key={index} style={teamStyle(sideTeams[index])}><div className="package-team"><Logo team={index === 0 ? selectedTrade.to : selectedTrade.from} size={30}/><h4>{sideNames[index]} <span>gets</span></h4></div><p className="package-description">{index === 0 ? selectedTrade.received : selectedTrade.sent}</p>{side.filter(p => !p.asset).map(player => {
         const stat = statsById.get(String(player.id));
         const metrics = stat?.position === 'G' ? [['gamesPlayed', 'GP'], ['wins', 'W'], ['savePct', 'SV%']] : [['gamesPlayed', 'GP'], ['goals', 'G'], ['assists', 'A'], ['points', 'PTS']];
         const reason = !player.id ? 'No NHL player record found' : stat?.position === 'G' ? 'Goalie: not counted in point totals' : stat && !stat.hasStats ? `No NHL games in ${seasonLabel(season)}` : '';
@@ -238,9 +238,6 @@ function Comparison({ selectedTrade, version, onReset, onBrowseTrades, season, s
     {stats.stale && <div className="notice">Saved player stats shown; NHL is temporarily unavailable.</div>}
     <div className="panel-foot"><span>Regular season · All teams combined</span>{selectedTrade ? <button className="text-button" onClick={onBrowseTrades}>Compare another trade <MoveRight size={15}/></button> : <a href="https://www.nhl.com/stats/" target="_blank" rel="noreferrer">NHL stats <ArrowUpRight size={15}/></a>}</div>
   </section>;
-}
-function HaulBadges({ text, players }) {
-  return <ul className="haul" aria-label="Assets">{haulParts(text, players).map(part => <li key={part}>{part}</li>)}</ul>;
 }
 function CompactSide({ team, text, players }) {
   return <span className="row-side" style={teamStyle(team)}><Logo team={team} size={32}/><span className="row-copy"><span className="row-team"><b>{team.abbrev}</b> gets <span className="row-haul">{haulParts(text, players).join(' + ')}</span></span><span className="row-text">{text}</span></span></span>;
@@ -260,7 +257,7 @@ function HeroSide({ team, text, players }) {
   const assets = otherAssets(text);
   return <div className="trade-side" style={teamStyle(team)}><div className="trade-team"><Logo team={team} size={40} eager/><h3>{team.name} <span>gets</span></h3></div>
     {shown.length ? <ul className="hero-players">{shown.map((name, i) => <li key={name}><strong>{name}</strong>{roles[i] && <small>{roles[i]}</small>}</li>)}{players.length > 3 && <li className="hero-more">+ {players.length - 3} more</li>}</ul> : !assets.length && <p>{text}</p>}
-    {assets.length > 0 && <ul className="haul" aria-label="Other assets">{assets.map(asset => <li key={asset}>{asset}</li>)}</ul>}</div>;
+    {assets.length > 0 && <ul className="hero-assets" aria-label="Other assets">{assets.map(asset => <li key={asset}>{asset}</li>)}</ul>}</div>;
 }
 function LatestTrade({ trade, onCompare }) {
   return <section className="panel latest-trade"><h2 className="sr-only">Latest trade</h2><div className="latest-head"><span>Latest trade · <time dateTime={trade.date}>{dateLabel(trade.date)}</time></span><span className="latest-actions"><a href={trade.source} target="_blank" rel="noreferrer">NHL.com <ArrowUpRight size={14}/></a><button className="primary-button" onClick={() => onCompare(trade)}>Compare this trade<MoveRight size={18}/></button></span></div>

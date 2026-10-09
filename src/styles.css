@@ -110,9 +110,6 @@ h2 { font-size: 1.45rem; line-height: 1.3; font-weight: 700; letter-spacing: -.4
 .team-logo { object-fit: contain; flex-shrink: 0; background: var(--logo-chip); border-radius: 50%; padding: 3px; box-shadow: 0 0 0 2px var(--team-ink, var(--team-color, var(--line))); }
 :root[data-theme="light"] .team-logo { box-shadow: 0 0 0 2px color-mix(in srgb, var(--team-ink, var(--team-color, var(--line))) 72%, #20252c); }
 .team-fallback { font-size: .75rem; color: var(--muted); flex-shrink: 0; }
-.haul { display: flex; flex-wrap: wrap; gap: 8px; }
-.haul li { padding: 2px 10px 1px; border: 2px solid var(--team-ink, var(--team-color)); border-radius: 4px; background: color-mix(in srgb, var(--team-ink, var(--team-color)) 14%, transparent); font: 700 1.0625rem/1.3 'Barlow Condensed', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--text); transform: rotate(-1.5deg); }
-.haul li:nth-child(even) { transform: rotate(1.2deg); }
 .trade-side p { font-size: 1rem; color: var(--text-secondary); line-height: 1.65; margin-top: 12px; overflow-wrap: anywhere; }
 .trade-direction { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; padding: 5px; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--muted); z-index: 1; }
 .show-more { width: 100%; display: flex; align-items: center; justify-content: center; gap: 9px; padding: 14px; border: 0; border-top: 1px solid var(--line); background: var(--surface); color: var(--accent); min-height: 48px; font-size: .9375rem; }
@@ -181,7 +178,7 @@ tbody tr:hover { background: var(--surface-alt); }
 .package-workspace { min-width: 0; background: var(--input); padding: 24px; border-left: 1px solid var(--line); }
 .package-team { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .package-team h4 { font-size: 1rem; line-height: 1.4; }
-.package-team h4 span { display: block; font-size: .8125rem; color: var(--text-secondary); font-weight: 600; }
+.package-team h4 span { display: inline-block; font-size: .875rem; color: var(--text-secondary); font-weight: 400; }
 .package-description { font-size: .9375rem; line-height: 1.65; color: var(--text-secondary); margin: 12px 0; }
 .trade-package + .trade-package { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
 .trade-player-card { border: 1px solid var(--line); border-radius: 5px; padding: 12px; margin-top: 8px; background: var(--surface); }
@@ -345,7 +342,8 @@ tbody .points { padding-right: 6px; }
 .hero-players small { font-size: .875rem; font-weight: 400; color: var(--text-secondary); }
 .hero-players strong { font-size: 1.75rem; font-weight: 650; line-height: 1.2; letter-spacing: -.02em; overflow-wrap: break-word; }
 .hero-more { font-size: 1rem; font-weight: 500; color: var(--text-secondary); }
-.latest-trade .haul { margin-top: 18px; }
+.hero-assets { display: grid; gap: 6px; font-size: 1rem; color: var(--text-secondary); }
+.hero-players + .hero-assets { margin-top: 16px; }
 .latest-trade .trade-direction { top: 50%; }
 @media (max-width: 760px) {
   .hero-players strong { font-size: 1.5rem; }
