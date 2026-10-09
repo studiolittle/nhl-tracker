@@ -231,13 +231,26 @@ function HaulBadges({ text, players }) {
 function CompactSide({ team, text, players }) {
   return <span className="row-side" style={teamStyle(team)}><Logo team={team} size={32}/><span className="row-copy"><span className="row-team"><b>{team.abbrev}</b> gets <span className="row-haul">{haulParts(text, players).join(' + ')}</span></span><span className="row-text">{text}</span></span></span>;
 }
-function TradeSide({ team, text, players, large }) {
-  return <div className="trade-side" style={teamStyle(team)}><div className="trade-team"><Logo team={team} size={large ? 64 : 40} eager={large}/><div><span className="gets-label">gets</span><h3>{team.name}</h3></div></div><HaulBadges text={text} players={players}/><p>{text}</p></div>;
+const roleLabels = { forward: 'Forward', forwards: 'Forward', defenseman: 'Defenseman', defensemen: 'Defenseman', goaltender: 'Goalie', goaltenders: 'Goalie', goalie: 'Goalie', goalies: 'Goalie', center: 'Center', centers: 'Center', centre: 'Center' };
+function playerRoles(text, names) {
+  const roles = [...text.matchAll(/\b(forwards?|defensemen|defenseman|goaltenders?|goalies?|centers?|centre)\b/gi)];
+  return names.map(name => { const at = text.indexOf(name); const role = roles.filter(r => r.index < at).at(-1); return role ? roleLabels[role[1].toLowerCase()] : ''; });
+}
+function otherAssets(text) {
+  const picks = [...text.matchAll(/(?:conditional\s+)?\d+(?:st|nd|rd|th)-round pick(?:\s+in\s+(?:the\s+)?\d{4}(?:\s+NHL Draft)?)?/gi)].map(m => m[0].replace(/\s+NHL Draft$/i, '').replace(/^./, c => c.toUpperCase()));
+  return /consideration/i.test(text) ? [...picks, 'Future considerations'] : picks;
+}
+function HeroSide({ team, text, players }) {
+  const roles = playerRoles(text, players);
+  const shown = players.slice(0, 3);
+  const assets = otherAssets(text);
+  return <div className="trade-side" style={teamStyle(team)}><div className="trade-team"><Logo team={team} size={48} eager/><h3>{team.name}</h3></div><span className="gets-label">gets</span>
+    {shown.length ? <ul className="hero-players">{shown.map((name, i) => <li key={name}>{roles[i] && <small>{roles[i]}</small>}<strong>{name}</strong></li>)}{players.length > 3 && <li className="hero-more">+ {players.length - 3} more</li>}</ul> : !assets.length && <p>{text}</p>}
+    {assets.length > 0 && <ul className="haul" aria-label="Other assets">{assets.map(asset => <li key={asset}>{asset}</li>)}</ul>}</div>;
 }
 function LatestTrade({ trade, onCompare }) {
-  return <section className="panel latest-trade"><h2 className="sr-only">Latest trade</h2><div className="latest-head"><span>Latest trade · <time dateTime={trade.date}>{dateLabel(trade.date)}</time></span><a href={trade.source} target="_blank" rel="noreferrer">NHL.com <ArrowUpRight size={14}/></a></div>
-    <div className="trade-sides large"><TradeSide large team={trade.to} text={trade.received} players={sidePlayers(trade, 'to')}/><TradeSide large team={trade.from} text={trade.sent} players={sidePlayers(trade, 'from')}/><span className="trade-direction" aria-hidden="true"><ArrowLeftRight size={20}/></span></div>
-    <div className="latest-foot"><button className="primary-button" onClick={() => onCompare(trade)}>Compare this trade<MoveRight size={18}/></button></div></section>;
+  return <section className="panel latest-trade"><h2 className="sr-only">Latest trade</h2><div className="latest-head"><span>Latest trade · <time dateTime={trade.date}>{dateLabel(trade.date)}</time></span><span className="latest-actions"><a href={trade.source} target="_blank" rel="noreferrer">NHL.com <ArrowUpRight size={14}/></a><button className="primary-button" onClick={() => onCompare(trade)}>Compare this trade<MoveRight size={18}/></button></span></div>
+    <div className="trade-sides large"><HeroSide team={trade.to} text={trade.received} players={sidePlayers(trade, 'to')}/><HeroSide team={trade.from} text={trade.sent} players={sidePlayers(trade, 'from')}/><span className="trade-direction" aria-hidden="true"><ArrowLeftRight size={20}/></span></div></section>;
 }
 function TradeWire({ trades, filtered, query, setQuery, selectedTrade, onCompare, full, onViewAll, skipFirst }) {
   const list = skipFirst ? filtered.slice(1) : filtered;
