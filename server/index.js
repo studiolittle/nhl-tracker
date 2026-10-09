@@ -37,7 +37,7 @@ async function standings() {
       name: t.teamName.default, abbrev: t.teamAbbrev.default, logo: t.teamLogo,
       conference: t.conferenceName, division: t.divisionName, gamesPlayed: t.gamesPlayed,
       wins: t.wins, losses: t.losses, otLosses: t.otLosses, points: t.points,
-      rank: t.leagueSequence, goalDifferential: t.goalDifferential,
+      rank: t.leagueSequence, conferenceSequence: t.conferenceSequence, wildcardSequence: t.wildcardSequence, goalDifferential: t.goalDifferential,
     })).sort((a, b) => a.rank - b.rank) };
   });
 }

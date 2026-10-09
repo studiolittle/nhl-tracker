@@ -15,6 +15,18 @@ function haulParts(text, players) {
   if (/consideration/i.test(text)) parts.push('considerations');
   return parts.length ? parts : ['other assets'];
 }
+const sideStyle = index => ({ '--team-color': index === 0 ? 'var(--side-a)' : 'var(--side-b)' });
+const perGame = ({ pts, gp }) => gp ? pts / gp : 0;
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const onChange = () => setMatches(media.matches);
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, [query]);
+  return matches;
+}
 const currentYear = new Date().getUTCFullYear() - (new Date().getUTCMonth() < 6 ? 1 : 0);
 const seasonLabel = year => `${year}–${String(year + 1).slice(-2)}`;
 const dateLabel = date => new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -93,7 +105,7 @@ function PlayerPicker({ label, selected, onSelect, autoFocus }) {
     }, 300);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [query]);
-  return <div className="player-picker"><label>{label}<div className="search-field"><Search size={15}/><input aria-label={label} autoFocus={autoFocus} value={query} placeholder={selected?.name || 'Search any NHL player'} onChange={e => setQuery(e.target.value)}/>{query && <button aria-label="Clear player search" onClick={() => setQuery('')}><X size={14}/></button>}</div></label>
+  return <div className="player-picker"><label>{label}<div className="search-field"><Search size={15}/><input aria-label={label} autoFocus={autoFocus} value={query} placeholder={selected?.id ? 'Search to change player' : 'Search any NHL player'} onChange={e => setQuery(e.target.value)}/>{query && <button aria-label="Clear player search" onClick={() => setQuery('')}><X size={14}/></button>}</div></label>
     {query.trim().length >= 2 && <div className="search-results">{status && <p role="status">{status}</p>}{results.map(player => <button key={player.id} onClick={() => { onSelect(player); setQuery(''); setResults([]); }}><span>{player.name}</span><small>{player.team || 'NHL'} · {player.position}</small></button>)}</div>}
   </div>;
 }
@@ -161,37 +173,48 @@ function Comparison({ selectedTrade, version, onReset, onBrowseTrades, season, s
   const sideTeams = selectedTrade ? [selectedTrade.to, selectedTrade.from] : players.map(p => ({ abbrev: p?.team }));
   const sideNames = selectedTrade ? [selectedTrade.to.name, selectedTrade.from.name] : ['Player one', 'Player two'];
   const needsPick = !selectedTrade && chosen.some(p => !p?.id);
-  const skaterPoints = selectedTrade ? packages.map(side => { const found = side.map(p => statsById.get(String(p.id))).filter(p => p?.hasStats && p.position !== 'G'); return found.length ? found.reduce((sum, p) => sum + p.points, 0) : null; }) : [];
-  const verdict = selectedTrade && !busy ? (() => {
-    const [a, b] = skaterPoints;
-    const [ta, tb] = [selectedTrade.to.abbrev, selectedTrade.from.abbrev];
-    const haul = `${ta} get ${haulParts(selectedTrade.received, sidePlayers(selectedTrade, 'to')).join(' + ')}; ${tb} get ${haulParts(selectedTrade.sent, sidePlayers(selectedTrade, 'from')).join(' + ')}.`;
-    if (a == null || b == null) return haul;
-    return `${haul} ${a === b ? `Even on points, ${a} each` : `${a > b ? ta : tb} side leads on points, ${Math.max(a, b)} to ${Math.min(a, b)}`} in ${seasonLabel(shown)}.`;
-  })() : '';
+  const totals = selectedTrade ? packages.map(side => { const found = side.map(p => statsById.get(String(p.id))).filter(p => p?.hasStats && p.position !== 'G'); return found.length ? { gp: found.reduce((sum, p) => sum + p.gamesPlayed, 0), pts: found.reduce((sum, p) => sum + p.points, 0), count: found.length } : null; }) : [];
+  const takeaway = (() => {
+    const [a, b] = totals;
+    if (!a || !b) return 'Not enough NHL skater stats to compare these packages yet.';
+    if (a.gp + b.gp < 30) return `Too early to call: the named skaters have only ${a.gp + b.gp} games between them.`;
+    const [pa, pb] = [perGame(a), perGame(b)];
+    if (Math.abs(pa - pb) < 0.05) return 'Even on points per game.';
+    return `${(pa > pb ? selectedTrade.to : selectedTrade.from).abbrev}’s players lead on points per game, ${Math.max(pa, pb).toFixed(2)} to ${Math.min(pa, pb).toFixed(2)}.`;
+  })();
+  const [showPickers, setShowPickers] = useState(!selectedTrade);
+  const pickers = <div className="picker-row">{chosen.map((player, index) => <PlayerPicker key={index} autoFocus={focusPicker && !selectedTrade && index === 0} label={index === 0 ? 'Player one' : 'Player two'} selected={player} onSelect={p => setChosen(old => old.map((value, i) => i === index ? p : value))}/>)}</div>;
   return <section className="panel comparison" id="compare" aria-busy={busy}>
-    <div className="section-heading"><div className="heading-icon"><ArrowLeftRight/><h2>Compare</h2></div><div className="comparison-actions">{selectedTrade && <button className="text-button" onClick={onReset}>Clear trade</button>}<label className="season-select"><span>Stats season</span><select aria-label="Player stats season" value={season} onChange={e => setSeason(Number(e.target.value))}>{[currentYear, currentYear - 1, currentYear - 2].map(y => <option key={y} value={y}>{seasonLabel(y)}</option>)}</select></label></div></div>
-    {selectedTrade ? <div className="trade-context"><button className="text-button back-link" onClick={onBrowseTrades}><ArrowLeft size={16}/>Trade wire</button><span><CalendarDays size={16}/>{dateLabel(selectedTrade.date)} trade</span><a href={selectedTrade.source} target="_blank" rel="noreferrer">View announcement <ArrowUpRight size={16}/></a></div> : <p className="section-description">Search for two players, or open a trade from the wire.</p>}
-    {verdict && <p className="verdict">{verdict}</p>}
+    <div className="section-heading"><div className="heading-icon"><ArrowLeftRight/><h2>Compare</h2></div><div className="comparison-actions">{selectedTrade && <button className="text-button nowrap" onClick={onReset}>Clear trade</button>}<label className="season-select"><span>Stats season</span><select aria-label="Player stats season" value={season} onChange={e => setSeason(Number(e.target.value))}>{[currentYear, currentYear - 1, currentYear - 2].map(y => <option key={y} value={y}>{seasonLabel(y)}</option>)}</select></label></div></div>
+    {selectedTrade ? <div className="trade-context"><button className="text-button back-link" onClick={onBrowseTrades}><ArrowLeft size={16}/>Trade wire</button><span><CalendarDays size={16}/>{dateLabel(selectedTrade.date)} trade</span><a href={selectedTrade.source} target="_blank" rel="noreferrer">Announcement <ArrowUpRight size={16}/></a></div> : <p className="section-description">Search for two players, or open a trade from the wire.</p>}
+    {selectedTrade && !busy && <div className="totals" aria-label="Package totals">
+      <div className="totals-sides">{totals.map((total, index) => { const team = index === 0 ? selectedTrade.to : selectedTrade.from; return <div className="totals-side" key={index} style={sideStyle(index)}><span className="totals-team">{team.abbrev} gets {haulParts(index === 0 ? selectedTrade.received : selectedTrade.sent, sidePlayers(selectedTrade, index === 0 ? 'to' : 'from')).join(' + ')}</span>{total ? <><strong>{total.pts}<small> pts</small></strong><span className="totals-detail">in {total.gp} games · {perGame(total).toFixed(2)} per game</span></> : <span className="totals-detail">No NHL skater stats in {seasonLabel(shown)}</span>}</div>; })}</div>
+      <p className="takeaway">{takeaway}</p>
+      <p className="totals-note">Skaters named in the trade, {seasonLabel(shown)} regular season. Goalies and draft picks aren’t counted.</p>
+    </div>}
     <div className="comparison-layout"><div className="matchup-workspace">
-      <div className="picker-row">{chosen.map((player, index) => <PlayerPicker key={index} autoFocus={focusPicker && !selectedTrade && index === 0} label={index === 0 ? 'Player one' : 'Player two'} selected={player} onSelect={p => setChosen(old => old.map((value, i) => i === index ? p : value))}/>)}</div>
-      <div className="player-matchup">{chosen.map((player, index) => <div className={'player-profile' + (player?.asset ? ' asset-profile' : '')} key={index} style={teamStyle(sideTeams[index])}>
-        <div className="player-details"><span>{player?.asset ? 'Trade return' : players[index]?.team ? `${players[index].team} / ${players[index].position}` : resolving ? 'Finding player…' : player?.id ? 'NHL player' : selectedTrade ? 'Player record unavailable' : 'Choose a player'}</span><h3>{player?.name || '—'}</h3><small>{player?.asset ? 'Non-player asset' : players[index]?.team ? 'Current team' : 'Selected player'}</small></div>
+      {!selectedTrade && pickers}
+      {selectedTrade && <p className="matchup-note">Head to head · choose another player from the package to switch</p>}
+      <div className="player-matchup">{chosen.map((player, index) => <div className={'player-profile' + (player?.asset ? ' asset-profile' : '')} key={index} style={sideStyle(index)}>
+        <div className="player-details"><span>{player?.asset ? 'Trade return' : players[index]?.team ? `${players[index].team} / ${players[index].position}` : resolving ? 'Finding player…' : player?.id ? 'NHL player' : selectedTrade ? 'Player record unavailable' : 'Choose a player'}</span><h3>{player?.name || '—'}</h3>{(player?.asset || players[index]?.team) && <small>{player?.asset ? 'Non-player asset' : 'Current team'}</small>}</div>
         {players[index]?.headshot && !busy ? <img className="headshot" src={players[index].headshot} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden'; }}/> : <div className="profile-symbol" aria-hidden="true"><ArrowLeftRight size={32}/></div>}
       </div>)}<span className="versus">vs</span></div>
       {needsPick ? <div className="empty-state compact" role="status">Pick both players above to compare their {seasonLabel(season)} numbers.</div> : busy ? <div className="empty-state compact" role="status"><RefreshCw className="spin" size={18}/>Loading player stats…</div> : mixed ? <div className="notice">Choose two skaters or two goalies to compare the same statistics.{selectedTrade ? ' Individual numbers are shown in the trade package.' : ''}</div> : <div className="stat-comparison">{metrics.map(([key, label]) => {
         const values = players.map(p => p?.hasStats ? p[key] : null);
-        const comparable = values.every(v => v != null);
+        const comparable = key !== 'gamesPlayed' && values.every(v => v != null) && values[0] !== values[1];
         const max = Math.max(...values.filter(v => v != null), 1);
-        return <div className="stat-row" key={key}><div className="stat-value left" style={teamStyle(sideTeams[0])}><strong className={comparable && values[0] > values[1] ? 'stat-winner' : ''}>{formatStat(players[0], key)}{comparable && values[0] > values[1] && <span className="sr-only"> (higher)</span>}</strong><i aria-hidden="true" style={{ width: `${(values[0] ?? 0) / max * 100}%` }}/></div><span>{label}</span><div className="stat-value right" style={teamStyle(sideTeams[1])}><strong className={comparable && values[1] > values[0] ? 'stat-winner' : ''}>{formatStat(players[1], key)}{comparable && values[1] > values[0] && <span className="sr-only"> (higher)</span>}</strong><i aria-hidden="true" style={{ width: `${(values[1] ?? 0) / max * 100}%` }}/></div></div>;
+        const cell = index => { const lead = comparable && values[index] > values[1 - index]; return <div className={'stat-value ' + (index === 0 ? 'left' : 'right')} style={sideStyle(index)}><strong className={lead ? 'stat-winner' : comparable ? 'stat-loser' : ''}>{formatStat(players[index], key)}{lead && <span className="sr-only"> (higher)</span>}</strong><i aria-hidden="true" style={{ width: `${(values[index] ?? 0) / max * 100}%` }}/></div>; };
+        return <div className="stat-row" key={key}>{cell(0)}<span>{label}</span>{cell(1)}</div>;
       })}</div>}
+      {selectedTrade && <div className="change-players"><button className="text-button" aria-expanded={showPickers} onClick={() => setShowPickers(v => !v)}>{showPickers ? 'Hide player search' : 'Search for a different player'}</button>{showPickers && pickers}</div>}
       {!busy && shown !== season && <p className="comparison-message">No NHL games recorded in {seasonLabel(season)} for these players, so this shows {seasonLabel(shown)}.</p>}
       {!busy && !needsPick && players.some(p => p && !p.hasStats) && <p className="comparison-message">No NHL regular-season stats for {players.filter(p => p && !p.hasStats).map(p => p.name).join(' and ')} in {seasonLabel(shown)}. Prospects, new signings and non-NHL players show “—”.</p>}
     </div><div className="package-workspace"><h3>{selectedTrade ? 'The complete trade' : 'How it works'}</h3>{selectedTrade ? <>
-      {packages.map((side, index) => <div className="trade-package" key={index} style={teamStyle(index === 0 ? selectedTrade.to : selectedTrade.from)}><div className="package-team"><Logo team={index === 0 ? selectedTrade.to : selectedTrade.from} size={30}/><h4>{sideNames[index]}<span>gets</span></h4></div><HaulBadges text={index === 0 ? selectedTrade.received : selectedTrade.sent} players={sidePlayers(selectedTrade, index === 0 ? 'to' : 'from')}/><p className="package-description">{index === 0 ? selectedTrade.received : selectedTrade.sent}</p>{side.filter(p => !p.asset).map(player => {
+      {packages.map((side, index) => <div className="trade-package" key={index} style={sideStyle(index)}><div className="package-team"><Logo team={index === 0 ? selectedTrade.to : selectedTrade.from} size={30}/><h4>{sideNames[index]}<span>gets</span></h4></div><HaulBadges text={index === 0 ? selectedTrade.received : selectedTrade.sent} players={sidePlayers(selectedTrade, index === 0 ? 'to' : 'from')}/><p className="package-description">{index === 0 ? selectedTrade.received : selectedTrade.sent}</p>{side.filter(p => !p.asset).map(player => {
         const stat = statsById.get(String(player.id));
         const metrics = stat?.position === 'G' ? [['gamesPlayed', 'GP'], ['wins', 'W'], ['savePct', 'SV%']] : [['gamesPlayed', 'GP'], ['goals', 'G'], ['assists', 'A'], ['points', 'PTS']];
-        return <article className="trade-player-card" key={player.name}><strong>{player.name}</strong>{player.id ? <div className="trade-player-card-stats">{metrics.map(([key, label]) => <span key={key}><b>{busy ? '…' : formatStat(stat, key)}</b>{label}</span>)}</div> : <small>{resolving ? 'Finding player…' : 'No NHL player record available'}</small>}</article>;
+        const inner = <><strong>{player.name}</strong>{player.id ? <div className="trade-player-card-stats">{metrics.map(([key, label]) => <span key={key}><b>{busy ? '…' : formatStat(stat, key)}</b>{label}</span>)}</div> : <small>{resolving ? 'Finding player…' : 'No NHL player record available'}</small>}</>;
+        return player.id ? <button className="trade-player-card pickable" key={player.name} aria-pressed={chosen[index]?.id === player.id} onClick={() => setChosen(old => old.map((value, i) => i === index ? player : value))}>{inner}</button> : <article className="trade-player-card" key={player.name}>{inner}</article>;
       })}</div>)}
     </> : <div className="comparison-guide"><ArrowLeftRight size={40}/><p>Every player. Both sides.</p><span>Open a trade from the wire to see every player’s numbers, draft picks and other assets in one place.</span><button className="text-button" onClick={onBrowseTrades}>Browse the trade wire <MoveRight size={18}/></button></div>}</div></div>
     {resolveError && <div className="notice" role="alert">{resolveError}<button className="text-button" onClick={() => setAttempt(v => v + 1)}>Try again</button></div>}
@@ -202,6 +225,9 @@ function Comparison({ selectedTrade, version, onReset, onBrowseTrades, season, s
 }
 function HaulBadges({ text, players }) {
   return <ul className="haul" aria-label="Assets">{haulParts(text, players).map(part => <li key={part}>{part}</li>)}</ul>;
+}
+function CompactSide({ team, text, players }) {
+  return <span className="row-side" style={teamStyle(team)}><Logo team={team} size={32}/><span className="row-copy"><span className="row-team"><b>{team.abbrev}</b> gets <span className="row-haul">{haulParts(text, players).join(' + ')}</span></span><span className="row-text">{text}</span></span></span>;
 }
 function TradeSide({ team, text, players, large }) {
   return <div className="trade-side" style={teamStyle(team)}><div className="trade-team"><Logo team={team} size={large ? 64 : 40} eager={large}/><div><span className="gets-label">gets</span><h3>{team.name}</h3></div></div><HaulBadges text={text} players={players}/><p>{text}</p></div>;
@@ -217,20 +243,26 @@ function TradeWire({ trades, filtered, query, setQuery, selectedTrade, onCompare
   return <section className="panel trades-panel" id="trade-wire"><div className="section-heading"><div className="heading-icon"><h2>Trade wire</h2>{trades.data && <span className="count">{filtered.length} since July 1</span>}</div><span className="verified-label" title="Every trade is read from the official NHL.com trade tracker."><ShieldCheck size={15}/>Official NHL tracker</span></div>
     <div className="trade-toolbar"><div className="search-field"><Search size={18}/><input aria-label="Search trades" placeholder="Search players or teams" value={query} onChange={e => setQuery(e.target.value)}/>{query && <button aria-label="Clear trade search" onClick={() => setQuery('')}><X size={18}/></button>}</div><span className="sort-label">Newest first</span></div>
     <div className="trade-feed"><Status state={trades}>{filtered.length === 0 && !trades.loading && <div className="empty-state">No trades match this search.<button className="text-button" onClick={() => setQuery('')}>Clear search</button></div>}
-      {visible.map(trade => <article className={'trade-item' + (selectedTrade?.id === trade.id ? ' selected' : '')} key={trade.id}><div className="trade-meta"><time dateTime={trade.date}>{dateLabel(trade.date)}</time><a href={trade.source} target="_blank" rel="noreferrer">NHL.com <ArrowUpRight size={14}/></a></div>
-        <div className="trade-sides"><TradeSide team={trade.to} text={trade.received} players={sidePlayers(trade, 'to')}/><TradeSide team={trade.from} text={trade.sent} players={sidePlayers(trade, 'from')}/><span className="trade-direction" aria-hidden="true"><ArrowLeftRight size={18}/></span></div>
-        <button className="compare-link" aria-current={selectedTrade?.id === trade.id ? 'true' : undefined} onClick={() => onCompare(trade)}>Compare trade<MoveRight size={18}/></button></article>)}
+      {visible.map(trade => <article className={'trade-item' + (selectedTrade?.id === trade.id ? ' selected' : '')} key={trade.id}><button className="trade-row" aria-current={selectedTrade?.id === trade.id ? 'true' : undefined} aria-label={`Compare trade from ${dateLabel(trade.date)}: ${trade.to.name} get ${trade.received}; ${trade.from.name} get ${trade.sent}`} onClick={() => onCompare(trade)}><time dateTime={trade.date}>{dateLabel(trade.date)}</time><span className="row-sides"><CompactSide team={trade.to} text={trade.received} players={sidePlayers(trade, 'to')}/><CompactSide team={trade.from} text={trade.sent} players={sidePlayers(trade, 'from')}/></span><MoveRight className="row-go" size={18}/></button></article>)}
     </Status></div>
     {!full && list.length > 4 && <button className="show-more" onClick={onViewAll}>View all {filtered.length} trades<MoveRight size={16}/></button>}
     <div className="panel-foot"><span>Updates every 5 minutes</span><a href={trades.data?.source || 'https://www.nhl.com/news/topic/trade-coverage/'} target="_blank" rel="noreferrer">Trade tracker<ArrowUpRight size={15}/></a></div>
   </section>;
 }
-function StandingsPanel({ standings, teams, rows, conference, setConference, full, onViewAll }) {
-  return <section className="panel standings-panel" id="league-standings"><div className="section-heading"><div className="heading-icon"><h2>Standings</h2></div><span className="quiet-label">{standings.data?.season ? seasonLabel(Math.floor(standings.data.season / 10000)) : seasonLabel(currentYear)}</span></div>
-    <div className="segmented" aria-label="Standings conference">{['All', 'Eastern', 'Western'].map(c => <button aria-pressed={conference === c} className={conference === c ? 'selected' : ''} key={c} onClick={() => setConference(c)}>{c === 'All' ? 'League' : c}</button>)}</div>
-    {teams.length > 0 && teams.every(t => t.gamesPlayed === 0) && <p className="preseason-note">Regular-season points start at zero.</p>}
-    <Status state={standings}><div className="standings-scroll" tabIndex="0" role="region" aria-label="Scrollable league standings"><table><caption className="sr-only">{conference === 'All' ? 'League' : conference} standings: games played, wins, losses, overtime losses, and points.</caption><thead><tr><th scope="col">#</th><th scope="col">Team</th><th scope="col">GP<span className="sr-only"> (games played)</span></th><th scope="col">W–L–OT</th><th scope="col">PTS<span className="sr-only"> (points)</span></th></tr></thead><tbody>{rows.map((t, i) => <tr key={t.abbrev}><td>{i + 1}</td><th scope="row"><Logo team={t} size={28}/><span aria-hidden="true">{t.abbrev}</span><span className="sr-only">{t.name}</span></th><td>{t.gamesPlayed}</td><td>{t.wins}–{t.losses}–{t.otLosses}</td><td className="points">{t.points}</td></tr>)}</tbody></table></div></Status>
-    <div className="panel-foot">{!full && <button className="text-button" onClick={onViewAll}>View standings <MoveRight size={15}/></button>}<span>{standings.data?.date ? `As of ${dateLabel(standings.data.date)}` : 'Regular season'}</span><a href="https://www.nhl.com/standings" target="_blank" rel="noreferrer">NHL.com<ArrowUpRight size={15}/></a></div>
+const confRows = (teams, conference) => {
+  const rows = teams.filter(t => conference === 'All' || t.conference === conference);
+  return conference === 'All' ? rows : [...rows].sort((x, y) => x.conferenceSequence - y.conferenceSequence);
+};
+function StandingsPanel({ standings, teams, rows, conference, setConference, full, onViewAll, title = 'Standings' }) {
+  const shown = full ? rows : rows.slice(0, 8);
+  const preseason = teams.length > 0 && teams.every(t => t.gamesPlayed === 0);
+  const showPlayoffs = conference !== 'All' && !preseason;
+  return <section className="panel standings-panel" id={`standings-${conference}`}><div className="section-heading"><div className="heading-icon"><h2>{title}</h2></div><span className="quiet-label">{standings.data?.season ? seasonLabel(Math.floor(standings.data.season / 10000)) : seasonLabel(currentYear)}</span></div>
+    {setConference && <div className="segmented" aria-label="Standings conference">{['All', 'Eastern', 'Western'].map(c => <button aria-pressed={conference === c} className={conference === c ? 'selected' : ''} key={c} onClick={() => setConference(c)}>{c === 'All' ? 'League' : c}</button>)}</div>}
+    {preseason && <p className="preseason-note">Regular-season points start at zero.</p>}
+    {showPlayoffs && <p className="preseason-note"><span className="po-dot" aria-hidden="true"/> In a playoff position</p>}
+    <Status state={standings}><div className="standings-scroll" tabIndex="0" role="region" aria-label={`Scrollable ${title.toLowerCase()}`}><table><caption className="sr-only">{conference === 'All' ? 'League' : conference} standings: games played, wins, losses, overtime losses, and points.</caption><thead><tr><th scope="col">#</th><th scope="col">Team</th><th scope="col">GP<span className="sr-only"> (games played)</span></th><th scope="col">W–L–OT</th><th scope="col">PTS<span className="sr-only"> (points)</span></th></tr></thead><tbody>{shown.map((t, i) => <tr key={t.abbrev}><td>{i + 1}</td><th scope="row"><Logo team={t} size={28}/><span className="abbr" aria-hidden="true">{t.abbrev}</span><span className="team-name">{t.name}</span>{showPlayoffs && t.wildcardSequence <= 2 && <><span className="po-dot" aria-hidden="true"/><span className="sr-only"> (in a playoff position)</span></>}</th><td>{t.gamesPlayed}</td><td>{t.wins}–{t.losses}–{t.otLosses}</td><td className="points">{t.points}</td></tr>)}</tbody></table></div></Status>
+    <div className="panel-foot">{!full && <button className="text-button" onClick={onViewAll}>View all {rows.length} teams <MoveRight size={15}/></button>}<span>{standings.data?.date ? `As of ${dateLabel(standings.data.date)}` : 'Regular season'}</span><a href="https://www.nhl.com/standings" target="_blank" rel="noreferrer">NHL.com<ArrowUpRight size={15}/></a></div>
   </section>;
 }
 const viewFromHash = () => window.location.hash.startsWith('#trades') ? 'Trades' : window.location.hash === '#standings' ? 'Standings' : 'Home';
@@ -269,7 +301,8 @@ function App() {
   const allTrades = trades.data?.trades || [];
   const selectedTrade = selectedId ? allTrades.find(t => t.id === selectedId) || null : null;
   const filtered = allTrades.filter(t => `${t.to.name} ${t.from.name} ${t.received} ${t.sent}`.toLowerCase().includes(query.toLowerCase()));
-  const rows = teams.filter(t => conference === 'All' || t.conference === conference);
+  const rows = confRows(teams, conference);
+  const wide = useMediaQuery('(min-width: 1100px)');
   const navigate = (name, tab = 'wire', id = null, focus = false) => {
     setFocusPicker(focus);
     setActive(name); setTradeTab(tab); setMenuOpen(false);
@@ -285,7 +318,7 @@ function App() {
   const comparison = <Comparison key={selectedTrade?.id || 'manual'} selectedTrade={selectedTrade} version={version} season={season} setSeason={setSeason} focusPicker={focusPicker} onReset={() => navigate('Trades', 'compare', null)} onBrowseTrades={() => navigate('Trades')}/>;
   const pendingTrade = tradeTab === 'compare' && selectedId && !selectedTrade;
   return <div className="app-shell"><a className="skip-link" href="#dashboard">Skip to dashboard</a><header className="topbar">
-    <a className="brand" href="#home" aria-label="Puck Haul home (alpha)" onClick={e => { e.preventDefault(); navigate('Home'); }}>puck haul<span className="alpha-tag" title="Puck Haul is in alpha. Features and data may change.">Alpha</span></a>
+    <a className="brand" href="#home" aria-label="Puck Haul home (alpha)" onClick={e => { e.preventDefault(); navigate('Home'); }}>puck<b>haul</b><span className="alpha-tag" title="Puck Haul is in alpha. Features and data may change.">Alpha</span></a>
     <button className="menu-toggle" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-controls="main-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(open => !open)}>{menuOpen ? <X/> : <Menu/>}</button>
     <nav id="main-navigation" className={menuOpen ? 'mobile-open' : ''} aria-label="Main navigation">{navItems.map(([name, Icon]) => <button key={name} aria-current={active === name ? 'page' : undefined} className={active === name ? 'active' : ''} onClick={() => navigate(name)}><Icon size={20}/>{name}</button>)}</nav>
     <button className="theme-toggle" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} onClick={() => setTheme(value => value === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={20}/> : <Moon size={20}/>}<span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button>
@@ -296,7 +329,7 @@ function App() {
       <div className="dashboard-grid"><TradeWire trades={trades} filtered={filtered} query={query} setQuery={setQuery} selectedTrade={selectedTrade} onCompare={compareTrade} skipFirst={!query && allTrades.length > 0} onViewAll={() => navigate('Trades')}/><StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} onViewAll={() => navigate('Standings')}/></div>
     </>}
     {active === 'Trades' && <div className="trades-page"><div className="trade-tabs" aria-label="Trades views"><button aria-pressed={tradeTab === 'wire'} className={tradeTab === 'wire' ? 'selected' : ''} onClick={() => navigate('Trades')}>Trade wire</button><button aria-pressed={tradeTab === 'compare'} className={tradeTab === 'compare' ? 'selected' : ''} onClick={() => navigate('Trades', 'compare', selectedId, true)}>Compare</button></div>{tradeTab === 'wire' ? <TradeWire trades={trades} filtered={filtered} query={query} setQuery={setQuery} selectedTrade={selectedTrade} onCompare={compareTrade} full/> : pendingTrade && trades.loading ? <div className="panel"><Status state={trades}/></div> : <>{pendingTrade && <div className="notice" role="status">That trade is no longer on the wire. You can still compare any two players.</div>}{comparison}</>}</div>}
-    {active === 'Standings' && <div className="standings-page"><StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} full/></div>}
+    {active === 'Standings' && (wide ? <div className="standings-page two-up"><StandingsPanel standings={standings} teams={teams} rows={confRows(teams, 'Eastern')} conference="Eastern" title="Eastern Conference" full/><StandingsPanel standings={standings} teams={teams} rows={confRows(teams, 'Western')} conference="Western" title="Western Conference" full/></div> : <div className="standings-page"><StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} full/></div>)}
     <footer><span>Built by Jesse Little · Puck Haul is in alpha, so features and data may change.</span><a href="https://studiolittle.ca" target="_blank" rel="noreferrer">studiolittle.ca <ArrowUpRight size={15}/></a></footer>
   </main></div>;
 }
