@@ -237,7 +237,7 @@ function playerRoles(text, names) {
   return names.map(name => { const at = text.indexOf(name); const role = roles.filter(r => r.index < at).at(-1); return role ? roleLabels[role[1].toLowerCase()] : ''; });
 }
 function otherAssets(text) {
-  const picks = [...text.matchAll(/(?:conditional\s+)?\d+(?:st|nd|rd|th)-round pick(?:\s+in\s+(?:the\s+)?\d{4}(?:\s+NHL Draft)?)?/gi)].map(m => m[0].replace(/\s+NHL Draft$/i, '').replace(/^./, c => c.toUpperCase()));
+  const picks = [...text.matchAll(/(?:conditional\s+)?\d+(?:st|nd|rd|th)-round pick(?:\s+in\s+(?:the\s+)?\d{4}(?:\s+NHL Draft)?)?/gi)].map(m => m[0].replace(/\s+in\s+(?:the\s+)?(\d{4}).*$/i, ' · $1').replace(/^./, c => c.toUpperCase()));
   return /consideration/i.test(text) ? [...picks, 'Future considerations'] : picks;
 }
 function HeroSide({ team, text, players }) {
