@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowLeft, ArrowLeftRight, ArrowUpRight, CircleHelp, LayoutDashboard, CalendarDays, MoveRight, Sun, Moon, Menu, RefreshCw, Search, ShieldCheck, Trophy, X } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, ArrowUpRight, CircleHelp, LayoutDashboard, CalendarDays, ChevronDown, MoveRight, Sun, Moon, Menu, RefreshCw, Search, ShieldCheck, Trophy, X } from 'lucide-react';
 import './styles.css';
+import PlayerPicker from './PlayerPicker.jsx';
 
 const teamColors = { ANA: '#f47a38', BOS: '#efb92b', BUF: '#3688dc', CAR: '#e14755', CBJ: '#507bbb', CGY: '#eb5358', CHI: '#e04f55', COL: '#a2597b', DAL: '#35ad83', DET: '#ec4c59', EDM: '#f58a42', FLA: '#d19757', LAK: '#a5abb5', MIN: '#55a68c', MTL: '#e45b71', NJD: '#e44e59', NSH: '#e3b538', NYI: '#f47f43', NYR: '#468cdd', OTT: '#de615c', PHI: '#f88146', PIT: '#e4c552', SEA: '#62b5c7', SJS: '#40b2b0', STL: '#5599e4', TBL: '#5698e8', TOR: '#4d8dda', UTA: '#79b8d2', VAN: '#55a0d4', VGK: '#bfaa79', WPG: '#6d9ec7', WSH: '#dc5c6b' };
 const teamStyle = team => ({ '--team-color': teamColors[team?.abbrev] || '#8b9aa8' });
@@ -49,9 +50,9 @@ function useData(url, version = 0) {
       setState({ data: null, loading: false, error: '' });
       return () => controller.abort();
     }
-    setState({ data: null, loading: true, error: '' });
+    setState(previous => ({ ...previous, loading: true, error: '' }));
     getJson(url, controller.signal).then(data => setState({ data, loading: false, error: '' })).catch(error => {
-      if (error.name !== 'AbortError') setState({ data: null, loading: false, error: error.message });
+      if (error.name !== 'AbortError') setState(previous => ({ ...previous, loading: false, error: error.message }));
     });
     return () => controller.abort();
   }, [url, version]);
@@ -89,25 +90,6 @@ function Status({ state, children }) {
   if (state.error) return <div className="empty-state error" role="alert"><CircleHelp size={21} /><span>{state.error}</span></div>;
   return <>{state.data?.stale && <div className="notice">Showing saved data from {new Date(state.data.fetchedAt).toLocaleString()}. The source is temporarily unavailable.</div>}{children}</>;
 }
-function PlayerPicker({ label, selected, onSelect, autoFocus }) {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  const [status, setStatus] = useState('');
-  useEffect(() => {
-    if (query.trim().length < 2) { setResults([]); setStatus(''); return; }
-    const controller = new AbortController();
-    setStatus('Searching…');
-    const timer = setTimeout(() => {
-      getJson(`/api/players/search?q=${encodeURIComponent(query.trim())}`, controller.signal).then(data => {
-        setResults(data.players); setStatus(data.players.length ? '' : 'No players found.');
-      }).catch(error => { if (error.name !== 'AbortError') setStatus('Search unavailable. Please try again.'); });
-    }, 300);
-    return () => { clearTimeout(timer); controller.abort(); };
-  }, [query]);
-  return <div className="player-picker"><label>{label}<div className="search-field"><Search size={15}/><input aria-label={label} autoFocus={autoFocus} value={query} placeholder={selected?.id ? 'Search to change player' : 'Search any NHL player'} onChange={e => setQuery(e.target.value)}/>{query && <button aria-label="Clear player search" onClick={() => setQuery('')}><X size={14}/></button>}</div></label>
-    {query.trim().length >= 2 && <div className="search-results">{status && <p role="status">{status}</p>}{results.map(player => <button key={player.id} onClick={() => { onSelect(player); setQuery(''); setResults([]); }}><span>{player.name}</span><small>{player.team || 'NHL'} · {player.position}</small></button>)}</div>}
-  </div>;
-}
 function tradePlayerNames(text = '') {
   let value = text.replace(/\.$/, '').trim();
   if (!value || /future considerations/i.test(value)) return [];
@@ -122,8 +104,6 @@ const skaterMetrics = [['gamesPlayed', 'Games played'], ['goals', 'Goals'], ['as
 const goalieMetrics = [['gamesPlayed', 'Games played'], ['wins', 'Wins'], ['savePct', 'Save percentage']];
 const formatStat = (player, key) => !player?.hasStats || player[key] == null ? '—' : key === 'savePct' ? player[key].toFixed(3) : player[key];
 function Comparison({ selectedTrade, version, onReset, onBrowseTrades, season, setSeason, focusPicker }) {
-  const [shown, setShown] = useState(season);
-  useEffect(() => setShown(season), [season]);
   const [chosen, setChosen] = useState(() => selectedTrade ? [selectedTrade.received, selectedTrade.sent].map(text => ({ name: tradePlayerNames(text)[0] || text, asset: !tradePlayerNames(text).length })) : [null, null]);
   const [packages, setPackages] = useState([[], []]);
   const [resolving, setResolving] = useState(Boolean(selectedTrade));
@@ -135,7 +115,6 @@ function Comparison({ selectedTrade, version, onReset, onBrowseTrades, season, s
     const texts = [selectedTrade.received, selectedTrade.sent];
     const names = [selectedTrade.receivedPlayers ?? tradePlayerNames(texts[0]), selectedTrade.sentPlayers ?? tradePlayerNames(texts[1])];
     const placeholders = names.map((side, index) => side.length ? side.map(name => ({ name })) : [{ name: texts[index] || 'Trade asset not specified', asset: true }]);
-    setChosen(placeholders.map(side => side[0]));
     setPackages(placeholders);
     setResolving(true);
     setResolveError('');
@@ -152,7 +131,7 @@ function Comparison({ selectedTrade, version, onReset, onBrowseTrades, season, s
     })))).then(sides => {
       if (controller.signal.aborted) return;
       setPackages(sides);
-      setChosen(sides.map(side => side[0]));
+      setChosen(previous => sides.map((side, index) => side.find(player => player.name === previous[index]?.name) || (previous[index]?.id ? previous[index] : side[0])));
       setResolving(false);
       if (sides.flat().some(p => p.searchError)) setResolveError('Some players could not be loaded.');
     }).catch(error => { if (error.name !== 'AbortError') { setResolving(false); setResolveError('Player search is unavailable.'); } });
@@ -160,13 +139,10 @@ function Comparison({ selectedTrade, version, onReset, onBrowseTrades, season, s
   }, [selectedTrade, attempt, version]);
   const allPlayers = [...chosen, ...packages.flat()];
   const uniquePlayers = [...new Map(allPlayers.filter(p => p?.id).map(p => [p.id, p])).values()];
-  const stats = usePlayersData(uniquePlayers, shown, `${version}:${attempt}`);
+  const stats = usePlayersData(uniquePlayers, season, `${version}:${attempt}`);
   const statsById = new Map(stats.players.map(p => [String(p.id), p]));
   const players = chosen.map(p => p?.id ? statsById.get(String(p.id)) : null);
   const busy = resolving || stats.loading;
-  useEffect(() => {
-    if (!busy && stats.players.length && stats.players.every(p => !p.hasStats) && shown > currentYear - 2) setShown(shown - 1);
-  }, [busy, stats.players, shown]);
   const mixed = players.every(Boolean) && players.some(p => p.position === 'G') && !players.every(p => p.position === 'G');
   const metrics = players.filter(Boolean).length && players.filter(Boolean).every(p => p.position === 'G') ? goalieMetrics : skaterMetrics;
   const sideTeams = selectedTrade ? [selectedTrade.to, selectedTrade.from] : players.map(p => ({ abbrev: p?.team }));
@@ -177,28 +153,61 @@ function Comparison({ selectedTrade, version, onReset, onBrowseTrades, season, s
   const takeaway = (() => {
     const [a, b] = totals;
     if (!a || !b) return 'Not enough NHL skater stats to compare these packages yet.';
+    if (a.count < a.named || b.count < b.named) return 'Some players are not included in the skater totals. Review the coverage before comparing.';
     if (a.gp + b.gp < 30) return `Too early to call: the named skaters have only ${a.gp + b.gp} games between them.`;
     const [pa, pb] = [perGame(a), perGame(b)];
     if (Math.abs(pa - pb) < 0.05) return 'Even on points per game.';
     return `${(pa > pb ? selectedTrade.to : selectedTrade.from).abbrev}’s players lead on points per game, ${Math.max(pa, pb).toFixed(2)} to ${Math.min(pa, pb).toFixed(2)}.`;
   })();
+  const compact = useMediaQuery('(max-width: 900px)');
+  const [packageOpen, setPackageOpen] = useState(!compact);
+  const packageRef = useRef(null);
+  const seasonRef = useRef(null);
+  const matchupRef = useRef(null);
+  useEffect(() => setPackageOpen(!compact), [compact]);
+  const packageChoices = packages.map(side => side.filter(player => player.id));
+  const canSwitchPlayers = packageChoices.some((side, index) => side.length > 1 || side.some(player => player.id !== chosen[index]?.id));
+  const incomplete = selectedTrade && (totals.some(total => !total || total.count < total.named) || totals.reduce((sum, total) => sum + (total?.gp || 0), 0) < 30);
+  const canTryEarlier = season > currentYear - 2 && namedCounts.every(count => count > 0);
+  const changeStatsSeason = nextSeason => {
+    setSeason(nextSeason);
+    seasonRef.current?.focus({ preventScroll: true });
+  };
+  const revealPackage = () => {
+    setPackageOpen(true);
+    requestAnimationFrame(() => {
+      const summary = packageRef.current?.querySelector('summary');
+      summary?.focus({ preventScroll: true });
+      summary?.scrollIntoView({ block: 'start', behavior: 'auto' });
+    });
+  };
+  const selectPackagePlayer = (index, player, returnToMatchup = false) => {
+    const next = chosen.map((value, i) => i === index ? player : value);
+    const controlsWillClose = canSwitchPlayers && !packageChoices.some((side, i) => side.length > 1 || side.some(option => option.id !== next[i]?.id));
+    setChosen(next);
+    if (returnToMatchup || controlsWillClose) requestAnimationFrame(() => {
+      matchupRef.current?.focus({ preventScroll: true });
+      matchupRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
+    });
+  };
   const [showPickers, setShowPickers] = useState(!selectedTrade);
-  const pickers = <div className="picker-row">{chosen.map((player, index) => <PlayerPicker key={index} autoFocus={focusPicker && !selectedTrade && index === 0} label={index === 0 ? 'Player one' : 'Player two'} selected={player} onSelect={p => setChosen(old => old.map((value, i) => i === index ? p : value))}/>)}</div>;
+  const pickers = <div className="picker-row">{chosen.map((player, index) => <PlayerPicker key={index} autoFocus={(selectedTrade ? showPickers : focusPicker) && index === 0} label={index === 0 ? 'Player one' : 'Player two'} selected={player} onSelect={p => setChosen(old => old.map((value, i) => i === index ? p : value))}/>)}</div>;
   return <section className="panel comparison" id="compare" aria-busy={busy}>
-    <div className="section-heading"><div className="heading-icon"><ArrowLeftRight/><h2>Compare</h2></div><div className="comparison-actions">{selectedTrade && <button className="text-button nowrap" onClick={onReset}>Clear trade</button>}<label className="season-select"><span>Stats season</span><select aria-label="Player stats season" value={season} onChange={e => setSeason(Number(e.target.value))}>{[currentYear, currentYear - 1, currentYear - 2].map(y => <option key={y} value={y}>{seasonLabel(y)}</option>)}</select></label></div></div>
+    <div className="section-heading"><div className="heading-icon"><ArrowLeftRight/><h2>Compare</h2></div><div className="comparison-actions">{selectedTrade && <button className="text-button nowrap" onClick={onReset}>Clear trade</button>}<label className="season-select"><span>Season</span><select ref={seasonRef} aria-label="Player stats season" value={season} onChange={e => setSeason(Number(e.target.value))}>{[currentYear, currentYear - 1, currentYear - 2].map(y => <option key={y} value={y}>{seasonLabel(y)}</option>)}</select></label></div></div>
     {selectedTrade ? <div className="trade-context"><button className="text-button back-link" onClick={onBrowseTrades}><ArrowLeft size={16}/>Trade wire</button><span><CalendarDays size={16}/>{dateLabel(selectedTrade.date)} trade</span><a href={selectedTrade.source} target="_blank" rel="noreferrer">Announcement <ArrowUpRight size={16}/></a></div> : <p className="section-description">Search for two players, or open a trade from the wire.</p>}
-    {selectedTrade && !busy && <div className="totals" aria-label="Package totals">
-      <div className="totals-sides">{totals.map((total, index) => { const team = index === 0 ? selectedTrade.to : selectedTrade.from; return <div className="totals-side" key={index} style={teamStyle(sideTeams[index])}><span className="totals-team">{team.abbrev} gets {haulParts(index === 0 ? selectedTrade.received : selectedTrade.sent, sidePlayers(selectedTrade, index === 0 ? 'to' : 'from')).join(' + ')}</span>{total ? <><strong>{total.pts}<small> pts</small></strong><span className="totals-detail">in {total.gp} games · {perGame(total).toFixed(2)} per game</span><span className="totals-coverage">Counts {total.count} of {total.named} {total.named === 1 ? 'player' : 'players'}</span></> : <><span className="totals-detail">No NHL skater stats in {seasonLabel(shown)}</span><span className="totals-coverage">Counts 0 of {namedCounts[index]} {namedCounts[index] === 1 ? 'player' : 'players'}</span></>}</div>; })}</div>
-      <p className="takeaway">{takeaway}</p>
-      <p className="totals-note">How this works: we add up points and games for the skaters named in the trade ({seasonLabel(shown)} regular season) and compare points per game. Goalies, draft picks and players without NHL games aren’t counted, and we won’t call it before the two sides have played 30 games combined.</p>
-    </div>}
     <div className="comparison-layout"><div className="matchup-workspace">
       {!selectedTrade && pickers}
-      {selectedTrade && <p className="matchup-note">Head to head · choose another player from the package to switch</p>}
+      <div className="matchup-heading"><h3 ref={matchupRef} tabIndex="-1">Head to head</h3><span>{seasonLabel(season)}</span>{selectedTrade && <button className="text-button" aria-expanded={showPickers} aria-controls="comparison-player-search" onClick={() => setShowPickers(v => !v)}>{showPickers ? 'Hide search' : 'Change players'}</button>}</div>
+      {selectedTrade && canSwitchPlayers && <div className="package-selectors">{packageChoices.map((choices, index) => <label key={index}><span>{sideTeams[index].abbrev} player</span><select aria-label={`${sideTeams[index].name} player`} value={chosen[index]?.id || ''} disabled={choices.length === 0 || (choices.length === 1 && choices.some(player => player.id === chosen[index]?.id))} onChange={event => selectPackagePlayer(index, choices.find(player => String(player.id) === event.target.value))}>
+        {!choices.some(player => player.id === chosen[index]?.id) && <option value={chosen[index]?.id || ''}>{chosen[index]?.name || 'No player available'}</option>}
+        {choices.map(player => <option key={player.id} value={player.id}>{player.name}</option>)}
+      </select></label>)}</div>}
+      {selectedTrade && <div id="comparison-player-search" hidden={!showPickers}>{showPickers && pickers}</div>}
       <div className="player-matchup">{chosen.map((player, index) => <div className={'player-profile' + (player?.asset ? ' asset-profile' : '')} key={index} style={teamStyle(sideTeams[index])}>
         <div className="player-details"><span>{player?.asset ? 'Trade return' : players[index]?.team ? `${players[index].team} / ${players[index].position}` : resolving ? 'Finding player…' : player?.id ? 'NHL player' : selectedTrade ? 'Player record unavailable' : 'Choose a player'}</span><h3>{player?.name || '—'}</h3>{(player?.asset || players[index]?.team) && <small>{player?.asset ? 'Non-player asset' : 'Current team'}</small>}</div>
         {players[index]?.headshot && !busy ? <img className="headshot" src={players[index].headshot} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden'; }}/> : <div className="profile-symbol" aria-hidden="true"><ArrowLeftRight size={32}/></div>}
       </div>)}<span className="versus">vs</span></div>
+      {compact && selectedTrade && !busy && incomplete && <div className="matchup-recovery"><p>Some package stats are missing or limited this season.</p><div className="comparison-next-actions">{canTryEarlier && <button className="refresh-button" onClick={() => changeStatsSeason(season - 1)}>Try {seasonLabel(season - 1)} stats</button>}<button className="text-button" onClick={revealPackage}>View trade assets <MoveRight size={16}/></button></div></div>}
       {needsPick ? <div className="empty-state compact" role="status">Pick both players above to compare their {seasonLabel(season)} numbers.</div> : busy ? <div className="empty-state compact" role="status"><RefreshCw className="spin" size={18}/>Loading player stats…</div> : mixed ? <div className="notice">Choose two skaters or two goalies to compare the same statistics.{selectedTrade ? ' Individual numbers are shown in the trade package.' : ''}</div> : <div className="stat-comparison">{metrics.map(([key, label]) => {
         const values = players.map(p => p?.hasStats ? p[key] : null);
         const comparable = key !== 'gamesPlayed' && values.every(v => v != null) && values[0] !== values[1];
@@ -206,18 +215,24 @@ function Comparison({ selectedTrade, version, onReset, onBrowseTrades, season, s
         const cell = index => { const lead = comparable && values[index] > values[1 - index]; return <div className={'stat-value ' + (index === 0 ? 'left' : 'right')} style={teamStyle(sideTeams[index])}><strong className={lead ? 'stat-winner' : comparable ? 'stat-loser' : ''}>{formatStat(players[index], key)}{lead && <span className="sr-only"> (higher)</span>}</strong><i aria-hidden="true" style={{ width: `${(values[index] ?? 0) / max * 100}%` }}/></div>; };
         return <div className="stat-row" key={key}>{cell(0)}<span>{label}</span>{cell(1)}</div>;
       })}</div>}
-      {selectedTrade && <div className="change-players"><button className="text-button" aria-expanded={showPickers} onClick={() => setShowPickers(v => !v)}>{showPickers ? 'Hide player search' : 'Search for a different player'}</button>{showPickers && pickers}</div>}
-      {!busy && shown !== season && <p className="comparison-message">No NHL games recorded in {seasonLabel(season)} for these players, so this shows {seasonLabel(shown)}.</p>}
-      {!busy && !needsPick && players.some(p => p && !p.hasStats) && <p className="comparison-message">No NHL regular-season stats for {players.filter(p => p && !p.hasStats).map(p => p.name).join(' and ')} in {seasonLabel(shown)}. Prospects, new signings and non-NHL players show “—”.</p>}
-    </div><div className="package-workspace"><h3>{selectedTrade ? 'The complete trade' : 'How it works'}</h3>{selectedTrade ? <>
+      {!busy && !needsPick && players.some(p => p && !p.hasStats) && <p className="comparison-message">No NHL regular-season stats for {players.filter(p => p && !p.hasStats).map(p => p.name).join(' and ')} in {seasonLabel(season)}. Prospects, new signings and non-NHL players show “—”.</p>}
+    </div><div className="package-workspace">{selectedTrade && !busy && <div className="comparison-summary">
+      <p className="takeaway" role="status" aria-live="polite" aria-atomic="true">{takeaway}</p>
+      <p className="summary-context">{seasonLabel(season)} regular season · Skaters only. Picks and goalies excluded.</p>
+      {incomplete && <div className="comparison-next-actions">{canTryEarlier && <button className="refresh-button" onClick={() => changeStatsSeason(season - 1)}>Try {seasonLabel(season - 1)} stats</button>}<button className="text-button" onClick={revealPackage}>View trade assets <MoveRight size={16}/></button></div>}
+      <details className="comparison-method"><summary>Package totals and method <ChevronDown size={16}/></summary>
+      <div className="totals-sides">{totals.map((total, index) => { const team = index === 0 ? selectedTrade.to : selectedTrade.from; return <div className="totals-side" key={index} style={teamStyle(sideTeams[index])}><span className="totals-team">{team.abbrev} gets {haulParts(index === 0 ? selectedTrade.received : selectedTrade.sent, sidePlayers(selectedTrade, index === 0 ? 'to' : 'from')).join(' + ')}</span>{total ? <><strong>{total.pts}<small> pts</small></strong><span className="totals-detail">in {total.gp} games · {perGame(total).toFixed(2)} per game</span><span className="totals-coverage">Counts {total.count} of {total.named} {total.named === 1 ? 'player' : 'players'}</span></> : <><span className="totals-detail">No NHL skater stats in {seasonLabel(season)}</span><span className="totals-coverage">Counts 0 of {namedCounts[index]} {namedCounts[index] === 1 ? 'player' : 'players'}</span></>}</div>; })}</div>
+      <p className="totals-note">How this works: we add up points and games for the skaters named in the trade ({seasonLabel(season)} regular season) and compare points per game. Goalies, draft picks and players without NHL games aren’t counted, and we won’t call it before the two sides have played 30 games combined.</p>
+      </details>
+    </div>}{selectedTrade ? <details className="package-disclosure" ref={packageRef} open={packageOpen} onToggle={event => setPackageOpen(event.currentTarget.open)}><summary>The complete trade <ChevronDown size={18}/></summary><div className="package-body">
       {packages.map((side, index) => <div className="trade-package" key={index} style={teamStyle(sideTeams[index])}><div className="package-team"><Logo team={index === 0 ? selectedTrade.to : selectedTrade.from} size={30}/><h4>{sideNames[index]}<span>gets</span></h4></div><HaulBadges text={index === 0 ? selectedTrade.received : selectedTrade.sent} players={sidePlayers(selectedTrade, index === 0 ? 'to' : 'from')}/><p className="package-description">{index === 0 ? selectedTrade.received : selectedTrade.sent}</p>{side.filter(p => !p.asset).map(player => {
         const stat = statsById.get(String(player.id));
         const metrics = stat?.position === 'G' ? [['gamesPlayed', 'GP'], ['wins', 'W'], ['savePct', 'SV%']] : [['gamesPlayed', 'GP'], ['goals', 'G'], ['assists', 'A'], ['points', 'PTS']];
-        const reason = !player.id ? 'No NHL player record found' : stat?.position === 'G' ? 'Goalie: not counted in point totals' : stat && !stat.hasStats ? `No NHL games in ${seasonLabel(shown)}` : '';
+        const reason = !player.id ? 'No NHL player record found' : stat?.position === 'G' ? 'Goalie: not counted in point totals' : stat && !stat.hasStats ? `No NHL games in ${seasonLabel(season)}` : '';
         const inner = <><strong>{player.name}</strong>{player.id ? <div className="trade-player-card-stats">{metrics.map(([key, label]) => <span key={key}><b>{busy ? '…' : formatStat(stat, key)}</b>{label}</span>)}</div> : <small>{resolving ? 'Finding player…' : 'No NHL player record found'}</small>}{player.id && !busy && reason && <small className="card-reason">{reason}</small>}</>;
-        return player.id ? <button className="trade-player-card pickable" key={player.name} aria-pressed={chosen[index]?.id === player.id} onClick={() => setChosen(old => old.map((value, i) => i === index ? player : value))}>{inner}</button> : <article className="trade-player-card" key={player.name}>{inner}</article>;
+        return player.id && canSwitchPlayers ? <button className="trade-player-card pickable" key={player.name} aria-pressed={chosen[index]?.id === player.id} onClick={() => selectPackagePlayer(index, player, true)}>{inner}</button> : <article className="trade-player-card" key={player.name}>{inner}</article>;
       })}</div>)}
-    </> : <div className="comparison-guide"><ArrowLeftRight size={40}/><p>Every player. Both sides.</p><span>Open a trade from the wire to see every player’s numbers, draft picks and other assets in one place.</span><button className="text-button" onClick={onBrowseTrades}>Browse the trade wire <MoveRight size={18}/></button></div>}</div></div>
+    </div></details> : <div className="comparison-guide"><h3>How it works</h3><ArrowLeftRight size={40}/><p>Every player. Both sides.</p><span>Open a trade from the wire to see every player’s numbers, draft picks and other assets in one place.</span><button className="text-button" onClick={onBrowseTrades}>Browse the trade wire <MoveRight size={18}/></button></div>}</div></div>
     {resolveError && <div className="notice" role="alert">{resolveError}<button className="text-button" onClick={() => setAttempt(v => v + 1)}>Try again</button></div>}
     {stats.error && <div className="notice" role="alert">{stats.error}<button className="text-button" onClick={() => setAttempt(v => v + 1)}>Try again</button></div>}
     {stats.stale && <div className="notice">Saved player stats shown; NHL is temporarily unavailable.</div>}
@@ -243,8 +258,8 @@ function HeroSide({ team, text, players }) {
   const roles = playerRoles(text, players);
   const shown = players.slice(0, 3);
   const assets = otherAssets(text);
-  return <div className="trade-side" style={teamStyle(team)}><div className="trade-team"><Logo team={team} size={48} eager/><h3>{team.name}</h3></div><span className="gets-label">gets</span>
-    {shown.length ? <ul className="hero-players">{shown.map((name, i) => <li key={name}>{roles[i] && <small>{roles[i]}</small>}<strong>{name}</strong></li>)}{players.length > 3 && <li className="hero-more">+ {players.length - 3} more</li>}</ul> : !assets.length && <p>{text}</p>}
+  return <div className="trade-side" style={teamStyle(team)}><div className="trade-team"><Logo team={team} size={40} eager/><h3>{team.name} <span>gets</span></h3></div>
+    {shown.length ? <ul className="hero-players">{shown.map((name, i) => <li key={name}><strong>{name}</strong>{roles[i] && <small>{roles[i]}</small>}</li>)}{players.length > 3 && <li className="hero-more">+ {players.length - 3} more</li>}</ul> : !assets.length && <p>{text}</p>}
     {assets.length > 0 && <ul className="haul" aria-label="Other assets">{assets.map(asset => <li key={asset}>{asset}</li>)}</ul>}</div>;
 }
 function LatestTrade({ trade, onCompare }) {
@@ -301,6 +316,18 @@ function App() {
   const [tradeTab, setTradeTab] = useState(tradeTabFromHash);
   const [menuOpen, setMenuOpen] = useState(false);
   const [focusPicker, setFocusPicker] = useState(false);
+  const mainRef = useRef(null);
+  const headingRef = useRef(null);
+  const viewKey = `${active}:${tradeTab}:${selectedId || ''}`;
+  const previousView = useRef(viewKey);
+  useEffect(() => {
+    if (previousView.current === viewKey) return;
+    previousView.current = viewKey;
+    const target = active === 'Trades' && tradeTab === 'compare' && !selectedId
+      ? document.querySelector('.player-picker input') || headingRef.current
+      : headingRef.current;
+    target?.focus({ preventScroll: true });
+  }, [viewKey, active, tradeTab, selectedId]);
   useEffect(() => { const timer = setInterval(() => setVersion(v => v + 1), 300_000); return () => clearInterval(timer); }, []);
   useEffect(() => {
     const onHashChange = () => { setActive(viewFromHash()); setTradeTab(tradeTabFromHash()); if (window.location.hash.startsWith('#trades/')) setSelectedId(tradeIdFromHash()); window.scrollTo(0, 0); };
@@ -317,7 +344,6 @@ function App() {
   const selectedTrade = selectedId ? allTrades.find(t => t.id === selectedId) || null : null;
   const filtered = allTrades.filter(t => `${t.to.name} ${t.from.name} ${t.received} ${t.sent}`.toLowerCase().includes(query.toLowerCase()));
   const rows = confRows(teams, conference);
-  const wide = useMediaQuery('(min-width: 1100px)');
   const navigate = (name, tab = 'wire', id = null, focus = false) => {
     setFocusPicker(focus);
     setActive(name); setTradeTab(tab); setMenuOpen(false);
@@ -328,23 +354,23 @@ function App() {
   const navItems = [['Home', LayoutDashboard], ['Trades', ArrowLeftRight], ['Standings', Trophy]];
   const compareTrade = trade => navigate('Trades', 'compare', trade.id);
   const loading = trades.loading || standings.loading;
-  const healthy = trades.data && standings.data && !trades.data.stale && !standings.data.stale;
+  const healthy = trades.data && standings.data && !trades.error && !standings.error && !trades.data.stale && !standings.data.stale;
   const checked = trades.data?.fetchedAt ? new Date(trades.data.fetchedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
   const comparison = <Comparison key={selectedTrade?.id || 'manual'} selectedTrade={selectedTrade} version={version} season={season} setSeason={setSeason} focusPicker={focusPicker} onReset={() => navigate('Trades', 'compare', null)} onBrowseTrades={() => navigate('Trades')}/>;
   const pendingTrade = tradeTab === 'compare' && selectedId && !selectedTrade;
-  return <div className="app-shell"><a className="skip-link" href="#dashboard">Skip to dashboard</a><header className="topbar">
+  return <div className="app-shell"><a className="skip-link" href="#dashboard" onClick={event => { event.preventDefault(); mainRef.current?.focus({ preventScroll: true }); mainRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' }); }}>Skip to dashboard</a><header className="topbar">
     <a className="brand" href="#home" aria-label="Puck Haul home (alpha)" onClick={e => { e.preventDefault(); navigate('Home'); }}>puck<b>haul</b><span className="alpha-tag" title="Puck Haul is in alpha. Features and data may change.">Alpha</span></a>
     <button className="menu-toggle" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-controls="main-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(open => !open)}>{menuOpen ? <X/> : <Menu/>}</button>
     <nav id="main-navigation" className={menuOpen ? 'mobile-open' : ''} aria-label="Main navigation">{navItems.map(([name, Icon]) => <button key={name} aria-current={active === name ? 'page' : undefined} className={active === name ? 'active' : ''} onClick={() => navigate(name)}><Icon size={20}/>{name}</button>)}</nav>
     <button className="theme-toggle" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} onClick={() => setTheme(value => value === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={20}/> : <Moon size={20}/>}<span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button>
-  </header><main id="dashboard"><div className="workspace-bar"><span>NHL / {seasonLabel(currentYear)}</span><span className={'sync-status' + (healthy ? ' healthy' : '')}><i/>{loading ? 'Checking sources' : healthy ? `Data up to date${checked ? ` · checked ${checked}` : ''}` : 'Check source status'}</span></div>
-    <div className="page-heading"><h1>{active === 'Home' ? 'The trade desk.' : active}</h1><button className="refresh-button" onClick={() => setVersion(v => v + 1)} disabled={loading}><RefreshCw size={17} className={loading ? 'spin' : ''}/>Refresh data</button></div>
+  </header><main id="dashboard" ref={mainRef} tabIndex="-1"><div className="workspace-bar"><span>NHL / {seasonLabel(currentYear)}</span><span role="status" aria-live="polite" aria-atomic="true" className={'sync-status' + (healthy ? ' healthy' : '')}><i/>{loading ? 'Checking sources' : healthy ? `Data up to date${checked ? ` · checked ${checked}` : ''}` : 'Check source status'}</span></div>
+    <div className="page-heading"><h1 ref={headingRef} tabIndex="-1">{active === 'Home' ? 'The trade desk.' : active}</h1><button className="refresh-button" onClick={() => setVersion(v => v + 1)} disabled={loading}><RefreshCw size={17} className={loading ? 'spin' : ''}/>Refresh data</button></div>
     {active === 'Home' && <>
       {allTrades[0] && <LatestTrade trade={allTrades[0]} onCompare={compareTrade}/>}
       <div className="dashboard-grid"><TradeWire trades={trades} filtered={filtered} query={query} setQuery={setQuery} selectedTrade={selectedTrade} onCompare={compareTrade} skipFirst={!query && allTrades.length > 0} onViewAll={() => navigate('Trades')}/><StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} onViewAll={() => navigate('Standings')}/></div>
     </>}
     {active === 'Trades' && <div className="trades-page"><div className="trade-tabs" aria-label="Trades views"><button aria-pressed={tradeTab === 'wire'} className={tradeTab === 'wire' ? 'selected' : ''} onClick={() => navigate('Trades')}>Trade wire</button><button aria-pressed={tradeTab === 'compare'} className={tradeTab === 'compare' ? 'selected' : ''} onClick={() => navigate('Trades', 'compare', selectedId, true)}>Compare</button></div>{tradeTab === 'wire' ? <TradeWire trades={trades} filtered={filtered} query={query} setQuery={setQuery} selectedTrade={selectedTrade} onCompare={compareTrade} full/> : pendingTrade && trades.loading ? <div className="panel"><Status state={trades}/></div> : <>{pendingTrade && <div className="notice" role="status">That trade is no longer on the wire. You can still compare any two players.</div>}{comparison}</>}</div>}
-    {active === 'Standings' && (wide ? <div className="standings-page two-up"><StandingsPanel standings={standings} teams={teams} rows={confRows(teams, 'Eastern')} conference="Eastern" title="Eastern Conference" full/><StandingsPanel standings={standings} teams={teams} rows={confRows(teams, 'Western')} conference="Western" title="Western Conference" full/></div> : <div className="standings-page"><StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} full/></div>)}
+    {active === 'Standings' && <div className="standings-page"><StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} full/></div>}
     <footer><span>Built by Jesse Little · Puck Haul is in alpha, so features and data may change.</span><a href="https://studiolittle.ca" target="_blank" rel="noreferrer">studiolittle.ca <ArrowUpRight size={15}/></a></footer>
   </main></div>;
 }

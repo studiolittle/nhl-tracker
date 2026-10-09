@@ -1,0 +1,6 @@
+.player-picker > label { display: block; }
+.player-picker .search-results { max-height: min(20rem, 45vh); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.player-picker .player-option { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; min-height: 44px; padding: 13px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.player-picker .player-option:last-child { border-bottom: 0; }
+.player-picker .player-option:hover, .player-picker .player-option.is-active { background: var(--selected); }
+.player-picker .player-option.is-active { outline: 2px solid var(--accent); outline-offset: -3px; }
