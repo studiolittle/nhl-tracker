@@ -41,7 +41,7 @@ async function standings() {
     })).sort((a, b) => a.rank - b.rank) };
   });
 }
-const route = fn => async (req, res) => { try { res.json(await fn(req)); } catch (error) { console.error(error.message); res.status(502).json({ error: 'The NHL source is temporarily unavailable. Please try again.' }); } };
+const route = (fn, cacheControl) => async (req, res) => { try { const body = await fn(req); if (cacheControl && !body.stale) res.set('Cache-Control', cacheControl); res.json(body); } catch (error) { console.error(error.message); res.status(502).json({ error: 'The NHL source is temporarily unavailable. Please try again.' }); } };
 app.get('/api/standings', route(() => standings()));
 const normalizeName = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 // Resolves to true/false, or null when the NHL lookup failed (callers keep the trade in that case).
@@ -57,12 +57,16 @@ async function isNhlPlayer(name, year) {
     return isNhl;
   } catch { return null; }
 }
-async function onlyNhlTrades(trades, year) {
+// Lookups past the deadline stay unknown (null), so slow cold starts show the trade rather than time out.
+async function onlyNhlTrades(trades, year, budgetMs = 7000) {
   const names = [...new Set(trades.flatMap(t => [...t.receivedPlayers, ...t.sentPlayers]))];
   const status = new Map();
-  for (let i = 0; i < names.length; i += 8) {
-    await Promise.all(names.slice(i, i + 8).map(async name => status.set(name, await isNhlPlayer(name, year))));
-  }
+  const lookups = (async () => {
+    for (let i = 0; i < names.length; i += 12) {
+      await Promise.all(names.slice(i, i + 12).map(async name => status.set(name, await isNhlPlayer(name, year))));
+    }
+  })();
+  await Promise.race([lookups, new Promise(resolve => setTimeout(resolve, budgetMs))]);
   return trades.filter(t => [...t.receivedPlayers, ...t.sentPlayers].some(name => status.get(name) !== false));
 }
 app.get('/api/trades', route(async () => {
@@ -73,7 +77,7 @@ app.get('/api/trades', route(async () => {
     if (!trades.length) throw new Error('No trades could be read from the official tracker');
     return { season: `${year}–${String(year + 1).slice(-2)}`, trades, source: trackerUrl(year) };
   });
-}));
+}, 'public, s-maxage=300, stale-while-revalidate=3600'));
 app.get('/api/players/search', route(async req => {
   const query = String(req.query.q || '').trim().slice(0, 80);
   if (query.length < 2) return { players: [] };
