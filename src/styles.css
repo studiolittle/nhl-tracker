@@ -25,7 +25,7 @@ input, textarea { caret-color: var(--accent); }
 button, input, select { font: inherit; }
 button, select { cursor: pointer; }
 button { color: inherit; }
-button:disabled { opacity: .6; cursor: wait; }
+button:disabled { opacity: .6; cursor: not-allowed; }
 a { color: inherit; text-decoration: none; }
 a:hover { color: var(--accent); }
 button, a, select { -webkit-tap-highlight-color: transparent; }
@@ -84,11 +84,12 @@ h2 { font-size: 1.45rem; line-height: 1.3; font-weight: 700; letter-spacing: -.4
 .trade-toolbar { padding: 0 24px 24px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid var(--line); }
 .search-field { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); background: var(--input); border-radius: 6px; min-height: 46px; min-width: 0; color: var(--muted); }
 .trade-toolbar .search-field { flex: 1; }
-.search-field:focus-within { border-color: var(--accent); background: var(--surface); }
+.search-field:focus-within { border-color: var(--accent); background: var(--surface); outline: 2px solid var(--accent); outline-offset: 2px; }
 .search-field input { border: 0; background: transparent; min-width: 0; width: 100%; color: var(--text); font-size: 1rem; }
 .search-field input:focus-visible { outline: none; }
 .search-field input::placeholder { color: var(--muted); opacity: 1; }
-.search-field button { border: 0; background: none; padding: 2px; display: flex; }
+.search-field button { border: 0; border-radius: 4px; background: none; padding: 8px; display: flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; margin-block: -8px; }
+.search-field button:hover { color: var(--text); background: var(--surface-alt); }
 .trade-feed { max-height: 800px; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 .trade-item { border-bottom: 1px solid var(--line); }
 .trade-item:last-child { border-bottom: 0; }
@@ -210,7 +211,7 @@ footer a { display: flex; align-items: center; gap: 4px; }
 .trade-tabs { display: flex; gap: 4px; margin-bottom: 24px; padding: 4px; width: fit-content; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
 .trade-tabs button { min-height: 44px; padding: 8px 18px; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font-size: .875rem; font-weight: 600; }
 .trade-tabs button:hover { color: var(--text); }
-.trade-tabs button.selected { background: var(--surface-alt); color: var(--text); }
+.trade-tabs button.selected { background: var(--selected); color: var(--accent); }
 .trades-page .trade-feed { max-height: none; overflow: visible; }
 .standings-page .standings-scroll { max-height: none; }
 
@@ -245,7 +246,7 @@ footer a { display: flex; align-items: center; gap: 4px; }
   .refresh-button { font-size: .8125rem; gap: 7px; padding-inline: 10px; }
   .section-heading { padding: 20px; }
   h2 { font-size: 1.3rem; }
-  .trade-item { padding: 18px 20px; }
+  .trade-item { padding: 0; }
   .trade-toolbar { padding-inline: 20px; }
   .comparison-actions { gap: 8px; }
   .latest-trade .trade-sides, .trade-sides { grid-template-columns: 1fr; }
@@ -259,7 +260,7 @@ footer a { display: flex; align-items: center; gap: 4px; }
   .topbar { padding-inline: 12px; gap: 8px; }
   main { padding-inline: 12px; }
   .section-heading { padding: 20px 16px; }
-  .trade-item, .trade-toolbar, .panel-foot { padding-inline: 16px; }
+  .trade-toolbar, .panel-foot { padding-inline: 16px; }
   .segmented { margin-inline: 16px; }
   .matchup-workspace, .package-workspace { padding: 16px; }
   .picker-row { grid-template-columns: 1fr; gap: 12px; }
@@ -321,7 +322,8 @@ tbody .points { padding-right: 6px; }
   .trade-context { flex-wrap: nowrap; gap: 6px; }
   .trade-context span svg { display: none; }
 }
-.trade-context > *, .trade-context span { white-space: nowrap; }
+.trade-context { flex-wrap: wrap; }
+.trade-context > *, .trade-context span { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 .standings-page .standings-panel { max-width: 1000px; margin-inline: auto; }
 .panel-foot a, footer a, .latest-head a { min-height: 44px; }
 .totals-coverage { margin-top: 2px; font-size: .875rem; font-weight: 600; color: var(--text-secondary); }
@@ -358,10 +360,10 @@ tbody .points { padding-right: 6px; }
 .standings-tabs { display: flex; gap: 24px; margin: 0 24px 24px; border-bottom: 1px solid var(--line); }
 .standings-tabs button { min-height: 48px; padding: 10px 0; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; color: var(--muted); font: inherit; font-size: .9375rem; }
 .standings-tabs button:hover { color: var(--text); }
-.standings-tabs button.selected { border-bottom-color: var(--text); color: var(--text); font-weight: 600; }
+.standings-tabs button.selected { border-bottom-color: var(--accent); color: var(--accent); font-weight: 650; }
 .standings-panel .standings-scroll { padding-inline: 24px; }
 .standings-panel thead th { padding: 12px 12px; font-size: .8125rem; }
-.standings-panel tbody th, .standings-panel tbody td { padding: 20px 12px; }
+.standings-panel tbody th, .standings-panel tbody td { padding: 14px 12px; }
 .standings-panel tbody th, .standings-panel .team-name { font-weight: 500; }
 .standings-panel tbody td { font-size: 1rem; }
 .standings-panel tbody td:first-child { font-size: .8125rem; }
@@ -374,7 +376,7 @@ tbody .points { padding-right: 6px; }
   .standings-tabs { gap: 24px; margin-inline: 16px; margin-bottom: 16px; }
   .standings-panel .standings-scroll { padding-inline: 16px; }
   .standings-panel thead th { padding-inline: 6px; }
-  .standings-panel tbody th, .standings-panel tbody td { padding: 18px 6px; }
+  .standings-panel tbody th, .standings-panel tbody td { padding: 14px 6px; }
   .standings-panel tbody th img { margin-right: 8px; }
   .standings-panel tbody .points { min-width: 32px; }
 }
@@ -447,7 +449,9 @@ tbody .points { padding-right: 6px; }
 .topbar nav .active { color: var(--accent); background: var(--selected); }
 .theme-toggle { border: 0; background: transparent; }
 .workspace-bar { min-height: 44px; font-size: .8125rem; }
+.sync-status.automatic i { background: var(--accent); }
 .page-heading { padding-top: 4px; }
+h2 { font-size: 1.25rem; letter-spacing: -.025em; }
 .alpha-tag { text-transform: none; letter-spacing: 0; font-size: .6875rem; border-color: var(--line); }
 .standings-panel tbody .points { font-weight: 750; }
 html { scrollbar-color: var(--line-strong) var(--canvas); }

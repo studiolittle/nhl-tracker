@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, ArrowLeftRight, ArrowUpRight } from 'lucide-react';
 import { getBroadcasts, broadcastGuide, outOfMarketGuide } from './lib/broadcasts.js';
 import { selectPlayoffSeries, playoffRoundLabel, playoffSeriesStatus } from './lib/playoffs.js';
+import FavouriteTeams, { useFavouriteTeams } from './FavouriteTeams.jsx';
+import { filterFavouriteGames } from './lib/favourites.js';
 import './SeasonHome.css';
 
 export function useHomeFeed(url, version = 0, interval = 0) {
@@ -40,7 +42,7 @@ function GameStatus({game}) {
   if(game.scheduleState==='PPD'||game.state==='PPD')return <span>Postponed</span>;
   if(game.scheduleState==='CNCL'||game.state==='CANC')return <span>Cancelled</span>;
   if(['FINAL','OFF'].includes(game.state))return <span>Final{game.periodType==='OT'?' / OT':game.periodType==='SO'?' / SO':''}</span>;
-  if(liveStates.has(game.state))return <span className="game-live">Live · {game.clock?.inIntermission?'Intermission':game.periodType==='OT'?'OT':game.periodType==='SO'?'Shootout':`P${game.period || 1}`}{game.clock?.timeRemaining&&!game.clock?.inIntermission?` · ${game.clock.timeRemaining}`:''}</span>;
+  if(liveStates.has(game.state))return <span className="game-live"><span>Live · {game.periodType==='OT'?'OT':game.periodType==='SO'?'SO':`P${game.period || 1}`}</span>{(game.clock?.inIntermission||game.clock?.timeRemaining)&&<span className="game-clock">{game.clock.inIntermission?'Intermission':game.clock.timeRemaining}</span>}</span>;
   return <time dateTime={game.startTime}>{startTime(game.startTime)}<span className="sr-only"> Eastern Time</span></time>;
 }
 function WhereToWatch({game,region}) {
@@ -53,12 +55,16 @@ function WhereToWatch({game,region}) {
     </> : <div className="watch-unavailable"><span>{watch.outOfMarket?'Out of market':'Not yet confirmed'}</span><a className="watch-coverage" href={watch.outOfMarket?outOfMarketGuide:broadcastGuide} target="_blank" rel="noreferrer">{watch.outOfMarket?'Check options':'Check listings'} <ArrowUpRight size={13}/></a></div>}
   </div></div>;
 }
-function Scores({version}) {
+function Scores({version,teamsFeed,onRetryTeams}) {
   const [date,setDate]=useState('now');
+  const favourites=useFavouriteTeams();
+  const [pickerOpen,setPickerOpen]=useState(false);
   const region='ottawa';
   const feed=useHomeFeed(`/api/scores${date==='now'?'':`?date=${date}`}`,version,30_000);
   const day=feed.data?.date || (date==='now'?etDate():date);
   const games=feed.data?.games||[];
+  const favouritesOnly=favourites.preferences.filter==='favourites';
+  const shownGames=favouritesOnly?filterFavouriteGames(games,favourites.preferences.teams):games;
   const now=etDate();
   return <section className="panel score-panel" aria-labelledby="scores-heading">
     <div className="score-toolbar">
@@ -71,11 +77,12 @@ function Scores({version}) {
         <div className="game-date-picker"><label className="sr-only" htmlFor="game-date">Choose a date</label><input type="date" id="game-date" min={shiftDate(now,-365)} max={shiftDate(now,365)} value={day} onChange={e=>{if(e.target.value)setDate(e.target.value);}}/></div>
       </div>
       <div className="score-day-strip" role="group" aria-label="Quick game dates">{[-3,-2,-1,0,1,2,3].map(offset=>{const value=shiftDate(day,offset);const parsed=new Date(`${value}T12:00:00Z`);return <button key={offset} className={offset===0?'selected':''} aria-label={fullDate(value)} aria-pressed={offset===0} disabled={value<shiftDate(now,-365)||value>shiftDate(now,365)} onClick={()=>setDate(value===now?'now':value)}><span>{parsed.toLocaleDateString('en-CA',{weekday:'short'})}</span><strong>{parsed.getUTCDate()}</strong></button>;})}</div>
-      <div className="score-date-summary"><h2 id="scores-heading" aria-live="polite">{fullDate(day)}</h2><span className="score-meta">{feed.data?`${games.length} ${games.length===1?'game':'games'} · ET`:'Times in ET'}</span></div>
+      <FavouriteTeams favourites={favourites} teamsFeed={teamsFeed} onRetry={onRetryTeams} open={pickerOpen} setOpen={setPickerOpen}/>
+      <div className="score-date-summary"><h2 id="scores-heading" aria-live="polite">{fullDate(day)}</h2><span className="score-meta" role="status">{feed.data?`${favouritesOnly?`${shownGames.length} of ${games.length}`:games.length} ${games.length===1?'game':'games'} · ET`:'Times in ET'}</span></div>
     </div>
     <FeedMessage feed={feed}/>
-    {feed.data&&games.length===0&&!feed.error&&<div className="no-games"><h3>No games scheduled{day===now?' today':''}.</h3><p>Browse another date for scores and viewing information.</p><button className="text-button" onClick={()=>setDate(shiftDate(day,1))}>See tomorrow <ArrowRight size={16}/></button></div>}
-    <ol className="game-list">{games.map(game=><li className="game-row" key={game.id}>
+    {favouritesOnly&&!favourites.preferences.teams.length?<div className="no-games"><h3>Follow a team to get started.</h3><p>Choose your favourite teams to see their games here.</p><button className="text-button" onClick={()=>setPickerOpen(true)}>Choose teams <ArrowRight size={16}/></button></div>:feed.data&&shownGames.length===0&&!feed.error&&<div className="no-games"><h3>{favouritesOnly?'Your teams aren’t playing on this date.':`No games scheduled${day===now?' today':''}.`}</h3><p>Browse another date for scores and viewing information.</p>{favouritesOnly?<button className="text-button" onClick={()=>favourites.setPreferences(previous=>({...previous,filter:'all'}))}>Show all games <ArrowRight size={16}/></button>:<button className="text-button" onClick={()=>setDate(shiftDate(day,1))}>See tomorrow <ArrowRight size={16}/></button>}</div>}
+    <ol className="game-list">{shownGames.map(game=><li className="game-row" key={game.id}>
       <div className="game-status-tab"><GameStatus game={game}/>{game.gameType===3&&<span>Playoffs</span>}{game.gameType===1&&<span>Preseason</span>}</div>
       <div className="game-matchup">
         {[game.away,game.home].map((team,index)=><div key={index} className="score-team" role="group" aria-label={`${team?.name || team?.abbrev || 'To be determined'}${team?.score!=null?`, ${team.score}`:''}${index===0?', away':', home'}`}>
@@ -100,7 +107,7 @@ function PlayoffSeries({version}) {
   const rounds=new Set(shown.map(s=>s.round));
   return <section className="panel playoff-panel"><div className="section-heading"><h2>{rounds.size===1?playoffRoundLabel(shown[0].round):'Playoff series'}</h2></div><FeedMessage feed={feed} empty={feed.data&&!shown.length?'Playoff matchups will appear when the NHL confirms them.':null}/><ul className="series-list">{shown.map(s=><li key={s.id}><a href={s.seriesUrl||'https://www.nhl.com/stanley-cup-playoffs'} target="_blank" rel="noreferrer">{rounds.size>1&&<p className="series-round">{playoffRoundLabel(s.round)}</p>}{[[s.topSeedTeam,s.topSeedWins],[s.bottomSeedTeam,s.bottomSeedWins]].map(([team,wins],i)=><div className="series-team" key={i}><TeamLogo team={team}/><span>{team?.name||'To be determined'}</span><strong>{wins??'—'}</strong></div>)}<span className="series-status">{playoffSeriesStatus(s)} <ArrowUpRight size={14}/></span></a></li>)}</ul></section>;
 }
-export default function SeasonHome({calendar,version,standingsPanel,trades,onCompare,onBrowseTrades,offseasonTrade}) {
+export default function SeasonHome({calendar,version,standingsPanel,teamsFeed,onRetryTeams,trades,onCompare,onBrowseTrades,offseasonTrade}) {
   const phase=calendar.data?.phase||'unknown';
   const offseason=phase==='offseason';
   const today=etDate();
@@ -111,6 +118,6 @@ export default function SeasonHome({calendar,version,standingsPanel,trades,onCom
     {calendar.error&&<p className="home-feed-message">Season details are unavailable. Scores and news remain available below.</p>}
     {offseason&&offseasonTrade}
     {phase==='preseason'&&<p className="season-note">Preseason hockey · Regular season begins {dateLabel(calendar.data.dates.regularSeasonStartDate)}.</p>}
-    <div className="season-layout"><div className="season-main">{phase==='playoffs'&&<PlayoffSeries version={version}/>}<Scores version={version}/><LeagueUpdates version={version}/></div><div className="season-sidebar">{standingsPanel}<section className={'panel home-trades'+(busyMarket?' market-active':'')}><div className="section-heading"><div><h2>Latest trades</h2></div></div>{trades.loading&&!trades.data?<p className="home-feed-message">Loading trades…</p>:trades.error&&!trades.data?<p className="home-feed-message">Trade updates are temporarily unavailable.</p>:!lastTrades.length?<p className="home-feed-message">No trades are available in the current feed.</p>:<ul>{lastTrades.map(t=><li key={t.id}><button onClick={()=>onCompare(t)}><time dateTime={t.date}>{dateLabel(t.date)}</time><strong>{t.to.abbrev} <ArrowLeftRight size={13} aria-hidden="true"/> {t.from.abbrev}</strong><span>{t.received}</span><ArrowRight size={16}/></button></li>)}</ul>}<div className="panel-foot"><button className="text-button" onClick={onBrowseTrades}>All trades & comparisons <ArrowRight size={15}/></button></div></section></div></div>
+    <div className="season-layout"><div className="season-main">{phase==='playoffs'&&<PlayoffSeries version={version}/>}<Scores version={version} teamsFeed={teamsFeed} onRetryTeams={onRetryTeams}/><LeagueUpdates version={version}/></div><div className="season-sidebar">{standingsPanel}<section className={'panel home-trades'+(busyMarket?' market-active':'')}><div className="section-heading"><div><h2>Latest trades</h2></div></div>{trades.loading&&!trades.data?<p className="home-feed-message">Loading trades…</p>:trades.error&&!trades.data?<p className="home-feed-message">Trade updates are temporarily unavailable.</p>:!lastTrades.length?<p className="home-feed-message">No trades are available in the current feed.</p>:<ul>{lastTrades.map(t=><li key={t.id}><button onClick={()=>onCompare(t)}><time dateTime={t.date}>{dateLabel(t.date)}</time><strong>{t.to.abbrev} <ArrowLeftRight size={13} aria-hidden="true"/> {t.from.abbrev}</strong><span>{t.received}</span><ArrowRight size={16}/></button></li>)}</ul>}<div className="panel-foot"><button className="text-button" onClick={onBrowseTrades}>All trades & comparisons <ArrowRight size={15}/></button></div></section></div></div>
   </div>;
 }

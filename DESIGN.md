@@ -39,7 +39,7 @@ typography:
     letterSpacing: "-.035em"
   title:
     fontFamily: "Manrope, sans-serif"
-    fontSize: "1.45rem"
+    fontSize: "1.25rem"
     fontWeight: 700
     lineHeight: 1.3
     letterSpacing: "-.45px"
@@ -138,7 +138,7 @@ The light-prefixed tokens record the corresponding light theme overrides. The th
 
 Manrope is self-hosted as variable WOFF2 files (weights 400–800), with a sans-serif fallback, font-display swap and no synthesized weights. The Latin subset is preloaded in index.html.
 
-The frontmatter records desktop roles. At phone widths (≤760px), the page headline uses 1.5rem with 1.25 line-height; section titles use 1.3rem. At ≤540px, score team names use .8125rem and scores use 1rem. Network labels remain small supporting text. Scores, dates, standings and comparison numbers use tabular figures.
+The frontmatter records desktop roles. At phone widths (≤760px), the page headline uses 1.5rem with 1.25 line-height; section titles retain the 1.25rem scale. At ≤540px, score team names use .8125rem and scores use 1rem. Network labels remain small supporting text. Scores, dates, standings and comparison numbers use tabular figures.
 
 Comparison player names use 2.2rem on larger screens and clamp(.9375rem, 4vw, 1.25rem) at ≤760px, with wrapping and a 1.3 line-height. Comparison statistic values reduce to 1.5rem at that breakpoint.
 
@@ -168,6 +168,7 @@ Panels have softly rounded corners. Small network tags use tighter corners; butt
 - **Dates:** the selected tile uses a ice-blue border, selected fill and ice-blue text; other tiles use muted labels and bright tabular day numbers. Native date input stays available beside the day controls, or below them on the narrowest phones.
 - **Network labels:** small tonal tags with compact network logos and names. Broadcast metadata remains available through accessible text; the current score surface is scoped to Ottawa listings and ET times.
 - **Score rows:** status at left, full team names stacked, scores aligned at right, broadcast tags below. Names can wrap; scores remain separate from the name column.
+- **Schedule favourites:** All games / Favourites controls use the selected ice-blue surface. Teams opens an inline searchable list, with pressed star buttons and a Done action. The list has two columns on desktop and one on phones, a bounded scroll area, and 48px minimum team targets. Team selections and filter mode persist on the device.
 - **Navigation:** the same three destinations persist across breakpoints. Phone tabs remain visible as part of the sticky header.
 - **Focus:** interactive elements use a 3px accent outline with 4px offset. Trade rows use an inward outline offset; search inputs defer the treatment to their container.
 
@@ -187,3 +188,11 @@ Panels have softly rounded corners. Small network tags use tighter corners; butt
 - Don't treat synthesized sidecar tonal ramps as implemented theme tokens.
 
 <!-- Extraction: src/styles.css, src/SeasonHome.css, src/SeasonHome.jsx, src/main.jsx and index.html. Final Home review captures: .impeccable/review/mobile.png and desktop.png. -->
+
+## Polish pass · October 10, 2026
+
+Date navigation and schedule filters now have a shared inset surface, while selected trade and standings tabs use the existing ice-blue accent. Live games show the period and clock on separate lines. Standings rows use 14px vertical padding, and mobile trade rows have a single layer of padding so package descriptions retain more room.
+
+Search fields have a visible focus outline and 44px clear controls. Focus rings stay inside scrollable team and trade rows. Trade announcement controls wrap on narrow phones, automatic-update indicators use blue, and disabled controls use a not-allowed cursor. The standings shortcut appears after team data is available.
+
+The date field is 50px high to align with the grouped navigation; the selected date retains a quieter ice-blue border. Empty schedules use centered messaging. Palette, font, content sources and navigation destinations are preserved.
