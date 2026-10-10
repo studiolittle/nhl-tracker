@@ -45,31 +45,49 @@ function GameStatus({game}) {
 }
 function WhereToWatch({game,region}) {
   const watch = getBroadcasts(game,region);
-  return <div className="watch-guide" aria-label="Where to watch">
+  return <div className="watch-block"><p className="watch-label">Where to watch</p><div className="watch-guide">
     {watch.exclusivePrime ? <div className="watch-channel"><NetworkLogo name="Prime Video"/><div><strong>Prime Video</strong><span>Streaming exclusive</span></div></div> : watch.channels.length ? <>
       {watch.channels.map(channel=><div className="watch-channel" key={channel.name}><NetworkLogo name={channel.name}/><div><strong>{channel.name}</strong><span>{channel.streaming?'Streaming':'TV'}{channel.french?' · French':''}{!channel.national?' · regional':''}</span></div></div>)}
       {watch.onlyStreaming&&<p className="watch-note">No TV channel listed.</p>}
       {watch.regional&&region!=='ottawa'&&<p className="watch-note">Regional blackouts apply.</p>}
-    </> : <><strong className="watch-unconfirmed">{watch.outOfMarket?'Check out-of-market coverage':'Broadcast not yet confirmed'}</strong><p className="watch-note">{watch.outOfMarket?'Sportsnet+ Premium or NHL Centre Ice; check availability.':'No available network listed for this region.'}</p><a className="watch-coverage" href={watch.outOfMarket?outOfMarketGuide:broadcastGuide} target="_blank" rel="noreferrer">Check availability <ArrowUpRight size={13}/></a></>}
-  </div>;
+    </> : <div className="watch-unavailable"><span>{watch.outOfMarket?'Out of market':'Not yet confirmed'}</span><a className="watch-coverage" href={watch.outOfMarket?outOfMarketGuide:broadcastGuide} target="_blank" rel="noreferrer">{watch.outOfMarket?'Check options':'Check listings'} <ArrowUpRight size={13}/></a></div>}
+  </div></div>;
 }
 function Scores({version}) {
   const [date,setDate]=useState('now');
-  const [region,setRegion]=useState(()=>{try{const saved=localStorage.getItem('puck-haul-region');return ['ottawa','canada','us'].includes(saved)?saved:'ottawa';}catch{return 'ottawa';}});
+  const region='ottawa';
   const feed=useHomeFeed(`/api/scores${date==='now'?'':`?date=${date}`}`,version,30_000);
   const day=feed.data?.date || (date==='now'?etDate():date);
   const games=feed.data?.games||[];
   const now=etDate();
-  const setViewingRegion=value=>{setRegion(value);try{localStorage.setItem('puck-haul-region',value);}catch{/* Use current-session selection. */}};
   return <section className="panel score-panel" aria-labelledby="scores-heading">
-    <div className="score-heading"><div><h2 id="scores-heading">{day===now?'Today’s games':fullDate(day)}</h2><p>{day===now?fullDate(day):'Scores and scheduled broadcasts'} · Times in Ottawa (ET)</p></div><label className="watch-region">Viewing in<select value={region} onChange={e=>setViewingRegion(e.target.value)}><option value="ottawa">Ottawa, Ontario</option><option value="canada">Canada · all listings</option><option value="us">United States · all listings</option></select></label></div>
-    <div className="game-date-bar"><div className="game-date-controls"><button aria-label="Previous day" onClick={()=>setDate(shiftDate(day,-1))} disabled={day<=shiftDate(now,-365)}><ArrowLeft size={17}/></button><label className="sr-only" htmlFor="game-date">Game date</label><input type="date" id="game-date" min={shiftDate(now,-365)} max={shiftDate(now,365)} value={day} onInput={e=>{if(e.target.value)setDate(e.target.value);}} onChange={e=>{if(e.target.value)setDate(e.target.value);}}/><button aria-label="Next day" onClick={()=>setDate(shiftDate(day,1))} disabled={day>=shiftDate(now,365)}><ArrowRight size={17}/></button><button className="today-button" onClick={()=>setDate('now')} disabled={date==='now'}>Today</button></div><span>{feed.loading&&feed.data?'Checking scores…':`${games.length} ${games.length===1?'game':'games'}`}</span></div>
+    <div className="score-toolbar">
+      <div className="score-date-summary"><h2 id="scores-heading" aria-live="polite">{fullDate(day)}, {day.slice(0,4)}</h2><span className="score-meta">{feed.data?`${games.length} ${games.length===1?'game':'games'} · ET`:'Times in ET'}</span></div>
+      <div className="score-date-actions">
+        <div className="game-date-controls" role="group" aria-label="Browse game dates">
+          <button onClick={()=>setDate(shiftDate(day,-1))} disabled={day<=shiftDate(now,-365)}><ArrowLeft size={16} aria-hidden="true"/>Previous day</button>
+          <button className={day===now?'selected':''} aria-current={day===now?'date':undefined} onClick={()=>setDate('now')}>Today</button>
+          <button onClick={()=>setDate(shiftDate(day,1))} disabled={day>=shiftDate(now,365)}>Next day<ArrowRight size={16} aria-hidden="true"/></button>
+        </div>
+        <div className="game-date-picker"><label htmlFor="game-date">Choose a date</label><input type="date" id="game-date" min={shiftDate(now,-365)} max={shiftDate(now,365)} value={day} onInput={e=>{if(e.target.value)setDate(e.target.value);}} onChange={e=>{if(e.target.value)setDate(e.target.value);}}/></div>
+      </div>
+    </div>
     <FeedMessage feed={feed}/>
     {feed.data&&games.length===0&&!feed.error&&<div className="no-games"><h3>No games scheduled{day===now?' today':''}.</h3><p>Browse another date for scores and viewing information.</p><button className="text-button" onClick={()=>setDate(shiftDate(day,1))}>See tomorrow <ArrowRight size={16}/></button></div>}
     <ol className="game-list">{games.map(game=><li className="game-row" key={game.id}>
-      <div className="game-matchup">{[game.away,game.home].map((team,index)=><div className="score-team" key={index}><TeamLogo team={team}/><span>{team?.name || team?.abbrev || 'To be determined'}</span><strong aria-label={team?.score==null?'Not started':`${team?.score} goals`}>{team?.score??'—'}</strong></div>)}</div>
-      <div className="game-state"><div className="game-time"><GameStatus game={game}/>{game.gameType===3&&<small>Playoffs</small>}{game.gameType===1&&<small>Preseason</small>}</div><WhereToWatch game={game} region={region}/></div>
-      <a className="game-link" href={game.gameCenterLink||'https://www.nhl.com/scores'} target="_blank" rel="noreferrer" aria-label={`${game.away?.name || 'To be determined'} at ${game.home?.name || 'To be determined'}: game details on NHL.com`}>Game details <ArrowUpRight size={13}/></a>
+      <div className="game-status-tab"><GameStatus game={game}/>{game.gameType===3&&<span>· Playoffs</span>}{game.gameType===1&&<span>· Preseason</span>}</div>
+      <div className="game-matchup">
+        {[game.away,game.home].map((team,index)=><React.Fragment key={index}>
+          {index===1&&<div className="game-score" aria-label={game.away?.score==null&&game.home?.score==null?'at':`${game.away?.name || 'Away team'} ${game.away?.score??'unavailable'}, ${game.home?.name || 'Home team'} ${game.home?.score??'unavailable'}`}>
+            {game.away?.score==null&&game.home?.score==null?<span className="matchup-at">@</span>:<><strong aria-hidden="true">{game.away?.score??'—'}</strong><span className="score-separator" aria-hidden="true">–</span><strong aria-hidden="true">{game.home?.score??'—'}</strong></>}
+          </div>}
+          <div className="score-team" role="group" aria-label={team?.name || team?.abbrev || 'To be determined'}>
+            <TeamLogo team={team}/>
+            <span aria-hidden="true"><span className="team-name-full">{team?.name || team?.abbrev || 'To be determined'}</span><span className="team-name-short">{team?.abbrev || 'TBD'}</span></span>
+          </div>
+        </React.Fragment>)}
+      </div>
+      <WhereToWatch game={game} region={region}/>
     </li>)}</ol>
     <div className="broadcast-footnote">{region==='ottawa'?'Ottawa listings exclude other teams’ regional feeds. ':'Regional blackouts may apply. '}Channel numbers depend on your TV provider. <a href={broadcastGuide} target="_blank" rel="noreferrer">Broadcast guide <ArrowUpRight size={13}/></a></div>
     <div className="panel-foot"><span>{feed.data?.fetchedAt?`Checked ${new Date(feed.data.fetchedAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})} · updates every 30 seconds`:'Scores update every 30 seconds'}</span><a href="https://www.nhl.com/scores" target="_blank" rel="noreferrer">NHL.com <ArrowUpRight size={14}/></a></div>

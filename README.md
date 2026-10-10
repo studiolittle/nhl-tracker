@@ -22,7 +22,7 @@ npm start
 ## What works
 
 - Home follows the NHL calendar: scores, viewing information and standings during the regular season; series progress during the playoffs; latest trades lead in the offseason.
-- Daily scores and start times in Ottawa time, with always-visible TV networks and streaming apps. Ottawa is the default viewing region; Canadian and US listings are also available. Confirmed Canadian Prime exclusives are labeled explicitly.
+- Daily scores and start times in Ottawa time, with always-visible TV networks and streaming apps. Listings currently use Ottawa as the viewing region. Compact date controls let visitors browse other days. Confirmed Canadian Prime exclusives are labeled explicitly.
 - Dated injury and lineup reports from NHL.com, linked to the original reporting.
 - Confirmed trades from the current season's official NHL trade tracker, with complete trade packages and original article links. Search by player or team.
 - All 32 teams' regular-season standings, including points, games played, wins, losses, and overtime losses. Filter by conference.

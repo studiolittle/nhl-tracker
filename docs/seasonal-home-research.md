@@ -28,9 +28,9 @@ The [official 2026–27 schedule announcement](https://www.nhl.com/news/nhl-anno
 
 ## Broadcasts for Ottawa, Ontario
 
-Use the game's NHL `tvBroadcasts` records rather than infer a broadcaster from the day of the week. Display the network/app logo, name, and TV/streaming medium beside the game clock or start time in a wrapping row directly below the matchup and score, without a disclosure control. Show unknown coverage honestly. Do not invent a provider-specific channel number.
+Use the game's NHL `tvBroadcasts` records rather than infer a broadcaster from the day of the week. Display the network/app logo, name, and TV/streaming medium in wrapping tiles beneath a visible “Where to watch” label. A compact time/status tile leads each game, followed by the teams and central score. Viewing information follows without a disclosure control. Out-of-market games use one short status and an availability link. Show unknown coverage honestly. Do not invent a provider-specific channel number.
 
-- Keep national Canadian listings and home/away regional listings for Ottawa or Montreal. Broader Canada/US selections show those countries' listings with regional-blackout qualification.
+- Keep national Canadian listings and home/away regional listings for Ottawa or Montreal. The UI currently uses Ottawa without a region selector; automatic location support is future work. The broadcast helper retains Canada/US support for future use.
 - Exclude Sportsnet+ when an Ottawa/Montreal game also has regional Canadian coverage, since a nominal country-wide streaming record does not override local blackouts.
 - If the only Canadian records are national Prime Video records within the confirmed 2026–2038 rights period, label Prime Video as a “Streaming exclusive.” A US regional Prime listing never triggers this label. Other streaming-only listings say no TV channel is listed, without claiming exclusivity.
 - If no usable Ottawa listing exists for a nonlocal game, point to out-of-market coverage for checking availability. This is not a guarantee of carriage.
