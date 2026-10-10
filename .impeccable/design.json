@@ -1,0 +1,561 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-10T18:43:32.803Z",
+  "title": "Design System: Puck Haul",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "tonalRamp": [
+          "oklch(15% 0.0134 260.88)",
+          "oklch(25% 0.0223 260.88)",
+          "oklch(35% 0.0268 260.88)",
+          "oklch(45% 0.0268 260.88)",
+          "oklch(55.00000000000001% 0.0268 260.88)",
+          "oklch(65% 0.0268 260.88)",
+          "oklch(80% 0.0268 260.88)",
+          "oklch(95% 0.0067 260.88)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0164 256.31)",
+          "oklch(25% 0.0273 256.31)",
+          "oklch(35% 0.0327 256.31)",
+          "oklch(45% 0.0327 256.31)",
+          "oklch(55.00000000000001% 0.0327 256.31)",
+          "oklch(65% 0.0327 256.31)",
+          "oklch(80% 0.0327 256.31)",
+          "oklch(95% 0.0082 256.31)"
+        ]
+      },
+      "surface-alt": {
+        "role": "neutral",
+        "displayName": "Surface Alt",
+        "tonalRamp": [
+          "oklch(15% 0.0215 256.88)",
+          "oklch(25% 0.0358 256.88)",
+          "oklch(35% 0.0430 256.88)",
+          "oklch(45% 0.0430 256.88)",
+          "oklch(55.00000000000001% 0.0430 256.88)",
+          "oklch(65% 0.0430 256.88)",
+          "oklch(80% 0.0430 256.88)",
+          "oklch(95% 0.0107 256.88)"
+        ]
+      },
+      "input": {
+        "role": "neutral",
+        "displayName": "Input",
+        "tonalRamp": [
+          "oklch(15% 0.0156 256.89)",
+          "oklch(25% 0.0261 256.89)",
+          "oklch(35% 0.0313 256.89)",
+          "oklch(45% 0.0313 256.89)",
+          "oklch(55.00000000000001% 0.0313 256.89)",
+          "oklch(65% 0.0313 256.89)",
+          "oklch(80% 0.0313 256.89)",
+          "oklch(95% 0.0078 256.89)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Text",
+        "tonalRamp": [
+          "oklch(15% 0.0060 259.82)",
+          "oklch(25% 0.0100 259.82)",
+          "oklch(35% 0.0119 259.82)",
+          "oklch(45% 0.0119 259.82)",
+          "oklch(55.00000000000001% 0.0119 259.82)",
+          "oklch(65% 0.0119 259.82)",
+          "oklch(80% 0.0119 259.82)",
+          "oklch(95% 0.0030 259.82)"
+        ]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Text Secondary",
+        "tonalRamp": [
+          "oklch(15% 0.0158 252.71)",
+          "oklch(25% 0.0263 252.71)",
+          "oklch(35% 0.0316 252.71)",
+          "oklch(45% 0.0316 252.71)",
+          "oklch(55.00000000000001% 0.0316 252.71)",
+          "oklch(65% 0.0316 252.71)",
+          "oklch(80% 0.0316 252.71)",
+          "oklch(95% 0.0079 252.71)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "tonalRamp": [
+          "oklch(15% 0.0199 251.99)",
+          "oklch(25% 0.0332 251.99)",
+          "oklch(35% 0.0398 251.99)",
+          "oklch(45% 0.0398 251.99)",
+          "oklch(55.00000000000001% 0.0398 251.99)",
+          "oklch(65% 0.0398 251.99)",
+          "oklch(80% 0.0398 251.99)",
+          "oklch(95% 0.0099 251.99)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "tonalRamp": [
+          "oklch(15% 0.0223 255.17)",
+          "oklch(25% 0.0371 255.17)",
+          "oklch(35% 0.0445 255.17)",
+          "oklch(45% 0.0445 255.17)",
+          "oklch(55.00000000000001% 0.0445 255.17)",
+          "oklch(65% 0.0445 255.17)",
+          "oklch(80% 0.0445 255.17)",
+          "oklch(95% 0.0111 255.17)"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Line Strong",
+        "tonalRamp": [
+          "oklch(15% 0.0264 253.69)",
+          "oklch(25% 0.0440 253.69)",
+          "oklch(35% 0.0528 253.69)",
+          "oklch(45% 0.0528 253.69)",
+          "oklch(55.00000000000001% 0.0528 253.69)",
+          "oklch(65% 0.0528 253.69)",
+          "oklch(80% 0.0528 253.69)",
+          "oklch(95% 0.0132 253.69)"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Accent",
+        "tonalRamp": [
+          "oklch(15% 0.0552 242.65)",
+          "oklch(25% 0.0921 242.65)",
+          "oklch(35% 0.1105 242.65)",
+          "oklch(45% 0.1105 242.65)",
+          "oklch(55.00000000000001% 0.1105 242.65)",
+          "oklch(65% 0.1105 242.65)",
+          "oklch(80% 0.1105 242.65)",
+          "oklch(95% 0.0276 242.65)"
+        ]
+      },
+      "selected": {
+        "role": "neutral",
+        "displayName": "Selected",
+        "tonalRamp": [
+          "oklch(15% 0.0301 244.85)",
+          "oklch(25% 0.0501 244.85)",
+          "oklch(35% 0.0602 244.85)",
+          "oklch(45% 0.0602 244.85)",
+          "oklch(55.00000000000001% 0.0602 244.85)",
+          "oklch(65% 0.0602 244.85)",
+          "oklch(80% 0.0602 244.85)",
+          "oklch(95% 0.0150 244.85)"
+        ]
+      },
+      "warning": {
+        "role": "neutral",
+        "displayName": "Warning",
+        "tonalRamp": [
+          "oklch(15% 0.0450 78.19)",
+          "oklch(25% 0.0750 78.19)",
+          "oklch(35% 0.0900 78.19)",
+          "oklch(45% 0.0900 78.19)",
+          "oklch(55.00000000000001% 0.0900 78.19)",
+          "oklch(65% 0.0900 78.19)",
+          "oklch(80% 0.0900 78.19)",
+          "oklch(95% 0.0225 78.19)"
+        ]
+      },
+      "warning-bg": {
+        "role": "neutral",
+        "displayName": "Warning Bg",
+        "tonalRamp": [
+          "oklch(15% 0.0100 76.65)",
+          "oklch(25% 0.0166 76.65)",
+          "oklch(35% 0.0200 76.65)",
+          "oklch(45% 0.0200 76.65)",
+          "oklch(55.00000000000001% 0.0200 76.65)",
+          "oklch(65% 0.0200 76.65)",
+          "oklch(80% 0.0200 76.65)",
+          "oklch(95% 0.0050 76.65)"
+        ]
+      },
+      "light-canvas": {
+        "role": "neutral",
+        "displayName": "Light Canvas",
+        "tonalRamp": [
+          "oklch(15% 0.0048 252.81)",
+          "oklch(25% 0.0080 252.81)",
+          "oklch(35% 0.0096 252.81)",
+          "oklch(45% 0.0096 252.81)",
+          "oklch(55.00000000000001% 0.0096 252.81)",
+          "oklch(65% 0.0096 252.81)",
+          "oklch(80% 0.0096 252.81)",
+          "oklch(95% 0.0024 252.81)"
+        ]
+      },
+      "light-surface": {
+        "role": "neutral",
+        "displayName": "Light Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(25% 0.0000 89.88)",
+          "oklch(35% 0.0000 89.88)",
+          "oklch(45% 0.0000 89.88)",
+          "oklch(55.00000000000001% 0.0000 89.88)",
+          "oklch(65% 0.0000 89.88)",
+          "oklch(80% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "light-surface-alt": {
+        "role": "neutral",
+        "displayName": "Light Surface Alt",
+        "tonalRamp": [
+          "oklch(15% 0.0080 253.90)",
+          "oklch(25% 0.0133 253.90)",
+          "oklch(35% 0.0160 253.90)",
+          "oklch(45% 0.0160 253.90)",
+          "oklch(55.00000000000001% 0.0160 253.90)",
+          "oklch(65% 0.0160 253.90)",
+          "oklch(80% 0.0160 253.90)",
+          "oklch(95% 0.0040 253.90)"
+        ]
+      },
+      "light-input": {
+        "role": "neutral",
+        "displayName": "Light Input",
+        "tonalRamp": [
+          "oklch(15% 0.0037 260.73)",
+          "oklch(25% 0.0062 260.73)",
+          "oklch(35% 0.0074 260.73)",
+          "oklch(45% 0.0074 260.73)",
+          "oklch(55.00000000000001% 0.0074 260.73)",
+          "oklch(65% 0.0074 260.73)",
+          "oklch(80% 0.0074 260.73)",
+          "oklch(95% 0.0018 260.73)"
+        ]
+      },
+      "light-text": {
+        "role": "neutral",
+        "displayName": "Light Text",
+        "tonalRamp": [
+          "oklch(15% 0.0243 256.29)",
+          "oklch(25% 0.0406 256.29)",
+          "oklch(35% 0.0487 256.29)",
+          "oklch(45% 0.0487 256.29)",
+          "oklch(55.00000000000001% 0.0487 256.29)",
+          "oklch(65% 0.0487 256.29)",
+          "oklch(80% 0.0487 256.29)",
+          "oklch(95% 0.0122 256.29)"
+        ]
+      },
+      "light-text-secondary": {
+        "role": "neutral",
+        "displayName": "Light Text Secondary",
+        "tonalRamp": [
+          "oklch(15% 0.0257 252.00)",
+          "oklch(25% 0.0428 252.00)",
+          "oklch(35% 0.0513 252.00)",
+          "oklch(45% 0.0513 252.00)",
+          "oklch(55.00000000000001% 0.0513 252.00)",
+          "oklch(65% 0.0513 252.00)",
+          "oklch(80% 0.0513 252.00)",
+          "oklch(95% 0.0128 252.00)"
+        ]
+      },
+      "light-muted": {
+        "role": "neutral",
+        "displayName": "Light Muted",
+        "tonalRamp": [
+          "oklch(15% 0.0267 251.68)",
+          "oklch(25% 0.0446 251.68)",
+          "oklch(35% 0.0535 251.68)",
+          "oklch(45% 0.0535 251.68)",
+          "oklch(55.00000000000001% 0.0535 251.68)",
+          "oklch(65% 0.0535 251.68)",
+          "oklch(80% 0.0535 251.68)",
+          "oklch(95% 0.0134 251.68)"
+        ]
+      },
+      "light-line": {
+        "role": "neutral",
+        "displayName": "Light Line",
+        "tonalRamp": [
+          "oklch(15% 0.0107 252.50)",
+          "oklch(25% 0.0178 252.50)",
+          "oklch(35% 0.0213 252.50)",
+          "oklch(45% 0.0213 252.50)",
+          "oklch(55.00000000000001% 0.0213 252.50)",
+          "oklch(65% 0.0213 252.50)",
+          "oklch(80% 0.0213 252.50)",
+          "oklch(95% 0.0053 252.50)"
+        ]
+      },
+      "light-line-strong": {
+        "role": "neutral",
+        "displayName": "Light Line Strong",
+        "tonalRamp": [
+          "oklch(15% 0.0205 253.07)",
+          "oklch(25% 0.0341 253.07)",
+          "oklch(35% 0.0409 253.07)",
+          "oklch(45% 0.0409 253.07)",
+          "oklch(55.00000000000001% 0.0409 253.07)",
+          "oklch(65% 0.0409 253.07)",
+          "oklch(80% 0.0409 253.07)",
+          "oklch(95% 0.0102 253.07)"
+        ]
+      },
+      "light-accent": {
+        "role": "primary",
+        "displayName": "Light Accent",
+        "tonalRamp": [
+          "oklch(15% 0.0614 247.71)",
+          "oklch(25% 0.1023 247.71)",
+          "oklch(35% 0.1227 247.71)",
+          "oklch(45% 0.1227 247.71)",
+          "oklch(55.00000000000001% 0.1227 247.71)",
+          "oklch(65% 0.1227 247.71)",
+          "oklch(80% 0.1227 247.71)",
+          "oklch(95% 0.0307 247.71)"
+        ]
+      },
+      "light-selected": {
+        "role": "neutral",
+        "displayName": "Light Selected",
+        "tonalRamp": [
+          "oklch(15% 0.0119 244.14)",
+          "oklch(25% 0.0198 244.14)",
+          "oklch(35% 0.0238 244.14)",
+          "oklch(45% 0.0238 244.14)",
+          "oklch(55.00000000000001% 0.0238 244.14)",
+          "oklch(65% 0.0238 244.14)",
+          "oklch(80% 0.0238 244.14)",
+          "oklch(95% 0.0059 244.14)"
+        ]
+      },
+      "light-success": {
+        "role": "primary",
+        "displayName": "Light Success",
+        "tonalRamp": [
+          "oklch(15% 0.0439 158.68)",
+          "oklch(25% 0.0732 158.68)",
+          "oklch(35% 0.0879 158.68)",
+          "oklch(45% 0.0879 158.68)",
+          "oklch(55.00000000000001% 0.0879 158.68)",
+          "oklch(65% 0.0879 158.68)",
+          "oklch(80% 0.0879 158.68)",
+          "oklch(95% 0.0220 158.68)"
+        ]
+      },
+      "light-warning": {
+        "role": "neutral",
+        "displayName": "Light Warning",
+        "tonalRamp": [
+          "oklch(15% 0.0446 73.48)",
+          "oklch(25% 0.0743 73.48)",
+          "oklch(35% 0.0892 73.48)",
+          "oklch(45% 0.0892 73.48)",
+          "oklch(55.00000000000001% 0.0892 73.48)",
+          "oklch(65% 0.0892 73.48)",
+          "oklch(80% 0.0892 73.48)",
+          "oklch(95% 0.0223 73.48)"
+        ]
+      },
+      "light-warning-bg": {
+        "role": "neutral",
+        "displayName": "Light Warning Bg",
+        "tonalRamp": [
+          "oklch(15% 0.0119 79.74)",
+          "oklch(25% 0.0198 79.74)",
+          "oklch(35% 0.0237 79.74)",
+          "oklch(45% 0.0237 79.74)",
+          "oklch(55.00000000000001% 0.0237 79.74)",
+          "oklch(65% 0.0237 79.74)",
+          "oklch(80% 0.0237 79.74)",
+          "oklch(95% 0.0059 79.74)"
+        ]
+      },
+      "success": {
+        "role": "success",
+        "displayName": "Success",
+        "tonalRamp": [
+          "oklch(15% 0.0378 161.05)",
+          "oklch(25% 0.0630 161.05)",
+          "oklch(35% 0.0755 161.05)",
+          "oklch(45% 0.0755 161.05)",
+          "oklch(55.00000000000001% 0.0755 161.05)",
+          "oklch(65% 0.0755 161.05)",
+          "oklch(80% 0.0755 161.05)",
+          "oklch(95% 0.0189 161.05)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Page headline",
+        "purpose": "Page destination and season-aware Home title."
+      },
+      "team-name": {
+        "displayName": "Score team name",
+        "purpose": "Full score team names; smaller at phone widths."
+      },
+      "score": {
+        "displayName": "Score",
+        "purpose": "Right-aligned tabular score values."
+      },
+      "network-label": {
+        "displayName": "Network label",
+        "purpose": "Compact viewing-information tags."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-pop",
+        "value": "0 12px 28px #0004",
+        "purpose": "Player search-results popover."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Latest-trade reveal easing."
+      },
+      {
+        "name": "hero-reveal",
+        "value": ".7s",
+        "purpose": "Clip-path reveal; disabled with reduced-motion preference."
+      },
+      {
+        "name": "hero-stagger",
+        "value": ".12s",
+        "purpose": "Second trade-side reveal delay."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "header-compact",
+        "value": "1150px"
+      },
+      {
+        "name": "home-grid-compact",
+        "value": "1050px"
+      },
+      {
+        "name": "comparison-stack",
+        "value": "900px"
+      },
+      {
+        "name": "home-stack",
+        "value": "850px"
+      },
+      {
+        "name": "phone-navigation",
+        "value": "760px"
+      },
+      {
+        "name": "phone-scores",
+        "value": "540px"
+      },
+      {
+        "name": "small-phone-comparison",
+        "value": "440px"
+      },
+      {
+        "name": "date-input-own-row",
+        "value": "360px"
+      },
+      {
+        "name": "standings-container",
+        "value": "560px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Compare a trade or perform the main action.",
+      "html": "<button class=\"ds-primary\">Compare this trade</button>",
+      "css": ".ds-primary{font-family:Manrope,sans-serif;background:var(--text);color:var(--canvas);padding:10px 18px;min-height:46px;border:0;border-radius:6px;font-size:.9375rem;font-weight:650;cursor:pointer}.ds-primary:hover{background:var(--accent)}.ds-primary:focus-visible,.ds-text:focus-visible,.ds-date:focus-visible,.ds-input:focus-visible,.ds-nav button:focus-visible{outline:3px solid var(--accent);outline-offset:4px}"
+    },
+    {
+      "name": "Text action",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "Secondary inline action.",
+      "html": "<button class=\"ds-text\">View all trades</button>",
+      "css": ".ds-text{font-family:Manrope,sans-serif;min-height:44px;border:0;background:transparent;color:var(--accent);padding:4px 8px;font-size:.875rem;cursor:pointer}.ds-text:hover{text-decoration:underline;text-underline-offset:4px}.ds-primary:focus-visible,.ds-text:focus-visible,.ds-date:focus-visible,.ds-input:focus-visible,.ds-nav button:focus-visible{outline:3px solid var(--accent);outline-offset:4px}"
+    },
+    {
+      "name": "Date input",
+      "kind": "input",
+      "refersTo": "date-input",
+      "description": "Native calendar selection alongside date navigation.",
+      "html": "<label class=\"ds-date-label\">Choose a date<input class=\"ds-input\" type=\"date\" value=\"2026-10-10\"></label>",
+      "css": ".ds-date-label{font-family:Manrope,sans-serif;display:grid;gap:6px;color:var(--text-secondary);font-size:.8125rem}.ds-input{font-family:Manrope,sans-serif;width:100%;min-width:0;min-height:44px;padding:8px;color:var(--text-secondary);background:var(--input);border:1px solid var(--line);border-radius:8px;font-size:.8125rem}.ds-input:hover{border-color:var(--line-strong)}.ds-primary:focus-visible,.ds-text:focus-visible,.ds-date:focus-visible,.ds-input:focus-visible,.ds-nav button:focus-visible{outline:3px solid var(--accent);outline-offset:4px}"
+    },
+    {
+      "name": "Phone navigation",
+      "kind": "nav",
+      "description": "Three visible primary destinations in the sticky phone header.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Main navigation\"><button aria-current=\"page\">Home</button><button>Trades</button><button>Standings</button></nav>",
+      "css": ".ds-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--canvas)}.ds-nav button{font-family:Manrope,sans-serif;min-height:48px;padding:10px 4px;border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:var(--muted);font-size:.875rem;font-weight:600;cursor:pointer}.ds-nav button:hover{color:var(--text);background:var(--surface)}.ds-nav button[aria-current=\"page\"]{color:var(--accent);border-bottom-color:var(--accent);background:transparent}.ds-primary:focus-visible,.ds-text:focus-visible,.ds-date:focus-visible,.ds-input:focus-visible,.ds-nav button:focus-visible{outline:3px solid var(--accent);outline-offset:4px}"
+    },
+    {
+      "name": "Selected day",
+      "kind": "button",
+      "refersTo": "date-selected",
+      "description": "Selected tile in the five or seven day strip.",
+      "html": "<button class=\"ds-date\" aria-pressed=\"true\"><span>Sat</span><strong>10</strong></button>",
+      "css": ".ds-date{font-family:Manrope,sans-serif;min-height:60px;min-width:44px;display:grid;align-content:center;justify-items:center;gap:2px;padding:6px 4px;border:1px solid var(--accent);border-radius:10px;background:var(--selected);color:var(--accent);cursor:pointer}.ds-date span{font-size:.6875rem;font-weight:650;text-transform:uppercase}.ds-date strong{font-size:1.0625rem;font-weight:750;font-variant-numeric:tabular-nums}.ds-date:hover{background:var(--surface-alt)}.ds-primary:focus-visible,.ds-text:focus-visible,.ds-date:focus-visible,.ds-input:focus-visible,.ds-nav button:focus-visible{outline:3px solid var(--accent);outline-offset:4px}"
+    },
+    {
+      "name": "Network label",
+      "kind": "chip",
+      "refersTo": "network-label",
+      "description": "Compact noninteractive viewing label under a matchup.",
+      "html": "<span class=\"ds-network\">Sportsnet</span>",
+      "css": ".ds-network{font-family:Manrope,sans-serif;display:inline-flex;align-items:center;min-height:25px;padding:3px 6px;border-radius:4px;background:var(--surface-alt);color:var(--text);font-size:.6875rem;line-height:1.4;font-weight:700}"
+    },
+    {
+      "name": "Score panel row",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Phone score row with left status and separate aligned values; sample text is illustrative.",
+      "html": "<section class=\"ds-panel\"><div class=\"ds-game\"><span class=\"ds-status\">Final</span><div class=\"ds-teams\"><div><span>Ottawa Senators</span><strong>3</strong></div><div><span>Toronto Maple Leafs</span><strong>2</strong></div></div></div></section>",
+      "css": ".ds-panel{font-family:Manrope,sans-serif;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:14px;overflow:hidden}.ds-game{display:grid;grid-template-columns:68px minmax(0,1fr);gap:8px 10px;padding:16px 12px}.ds-status{font-size:.75rem;line-height:1.5;font-weight:700;font-variant-numeric:tabular-nums}.ds-teams{display:grid;gap:6px;min-width:0}.ds-teams>div{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;min-height:26px}.ds-teams span{font-size:.8125rem;line-height:1.4;font-weight:650;overflow-wrap:anywhere}.ds-teams strong{min-width:18px;text-align:right;font-size:1rem;line-height:1.2;font-weight:800;font-variant-numeric:tabular-nums}"
+    }
+  ],
+  "narrative": {
+    "overview": "This documents the implemented mobile styling refinement of the existing Puck Haul interface. The user selected SportsToday.ca mobile as the visual reference and requested a more modern font. The resulting interface uses Manrope, cool navy surfaces and ice-blue selection states, with compact score rows and visible primary destinations.\n\nThe NHL scores, Ottawa broadcast listings, standings, trade wire and player comparisons retain their existing roles. This handoff describes the current implementation; it does not establish a new product identity.",
+    "keyCharacteristics": [
+      "One modern font across the interface.",
+      "Compact stacked team rows with aligned scores and a left status column.",
+      "Persistent Home, Trades and Standings tabs on phones.",
+      "Tonal surfaces, thin dividers and restrained accent use."
+    ],
+    "rules": [],
+    "dos": [
+      "Do use Manrope and semantic theme properties across new UI.",
+      "Do preserve full score team names, wrapping space and separate aligned scores.",
+      "Do keep all three primary phone destinations visible.",
+      "Do keep native date selection usable at narrow widths.",
+      "Do retain visible focus and reduced-motion behavior."
+    ],
+    "donts": [
+      "Don't replace the Puck Haul name or infer a new brand identity from this refinement.",
+      "Don't let compact viewing labels crowd the team-name column.",
+      "Don't apply desktop comparison-name sizes to phones.",
+      "Don't treat synthesized sidecar tonal ramps as implemented theme tokens."
+    ]
+  }
+}

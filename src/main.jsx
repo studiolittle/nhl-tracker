@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowLeft, ArrowLeftRight, ArrowUpRight, CircleHelp, LayoutDashboard, CalendarDays, ChevronDown, MoveRight, Sun, Moon, Menu, RefreshCw, Search, ShieldCheck, Trophy, X } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, ArrowUpRight, CircleHelp, LayoutDashboard, CalendarDays, ChevronDown, MoveRight, Sun, Moon, RefreshCw, Search, ShieldCheck, Trophy, X } from 'lucide-react';
 import './styles.css';
 import PlayerPicker from './PlayerPicker.jsx';
 import SeasonHome, { useHomeFeed } from './SeasonHome.jsx';
@@ -300,7 +300,7 @@ function App() {
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'dark');
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#141517' : '#f4f5f6');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0d1420' : '#f1f6fc');
     try { localStorage.setItem('puck-haul-theme', theme); } catch { /* Theme still works when storage is unavailable. */ }
   }, [theme]);
   const [version, setVersion] = useState(0);
@@ -313,9 +313,7 @@ function App() {
   const [selectedId, setSelectedId] = useState(tradeIdFromHash);
   const [active, setActive] = useState(viewFromHash);
   const [tradeTab, setTradeTab] = useState(tradeTabFromHash);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [focusPicker, setFocusPicker] = useState(false);
-  const menuRef = useRef(null);
   const mainRef = useRef(null);
   const headingRef = useRef(null);
   const viewKey = `${active}:${tradeTab}:${selectedId || ''}`;
@@ -334,18 +332,6 @@ function App() {
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
-  useEffect(() => {
-    const dialog = menuRef.current;
-    if (!menuOpen) { if (dialog?.open) dialog.close(); return; }
-    if (!dialog.open) dialog.showModal();
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const desktop = window.matchMedia('(min-width: 761px)');
-    const closeOnDesktop = () => { if (desktop.matches) setMenuOpen(false); };
-    desktop.addEventListener('change', closeOnDesktop);
-    closeOnDesktop();
-    return () => { document.body.style.overflow = previousOverflow; desktop.removeEventListener('change', closeOnDesktop); };
-  }, [menuOpen]);
   const teams = standings.data?.teams || [];
   const allTrades = trades.data?.trades || [];
   const selectedTrade = selectedId ? allTrades.find(t => t.id === selectedId) || null : null;
@@ -353,7 +339,7 @@ function App() {
   const rows = confRows(teams, conference);
   const navigate = (name, tab = 'wire', id = null, focus = false) => {
     setFocusPicker(focus);
-    setActive(name); setTradeTab(tab); setMenuOpen(false);
+    setActive(name); setTradeTab(tab);
     if (tab === 'compare') setSelectedId(id);
     window.location.hash = name === 'Home' ? 'home' : name === 'Trades' && tab === 'compare' ? (id ? `trades/${encodeURIComponent(id)}` : 'trades/compare') : name.toLowerCase();
     window.scrollTo(0, 0);
@@ -367,13 +353,9 @@ function App() {
   const pendingTrade = tradeTab === 'compare' && selectedId && !selectedTrade;
   return <div className="app-shell"><a className="skip-link" href="#dashboard" onClick={event => { event.preventDefault(); mainRef.current?.focus({ preventScroll: true }); mainRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' }); }}>Skip to dashboard</a><header className="topbar">
     <a className="brand" href="#home" aria-label="Puck Haul home (alpha)" onClick={e => { e.preventDefault(); navigate('Home'); }}>puck<b>haul</b><span className="alpha-tag" title="Puck Haul is in alpha. Features and data may change.">Alpha</span></a>
-    <button className="menu-toggle" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-controls="mobile-navigation" aria-expanded={menuOpen} aria-haspopup="dialog" onClick={() => setMenuOpen(open => !open)}>{menuOpen ? <X/> : <Menu/>}</button>
     <nav id="main-navigation" aria-label="Main navigation">{navItems.map(([name, Icon]) => <button key={name} aria-current={active === name ? 'page' : undefined} className={active === name ? 'active' : ''} onClick={() => navigate(name)}><Icon size={20}/>{name}</button>)}</nav>
     <button className="theme-toggle" aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} onClick={() => setTheme(value => value === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={20}/> : <Moon size={20}/>}<span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button>
-  </header><dialog ref={menuRef} id="mobile-navigation" className="mobile-navigation" aria-label="Main menu" onCancel={event => { event.preventDefault(); setMenuOpen(false); }} onClose={() => setMenuOpen(false)}>
-    <div className="mobile-menu-header"><span className="brand">puck<b>haul</b></span><button className="mobile-menu-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">Close <X size={22}/></button></div>
-    <nav aria-label="Mobile navigation">{[['Home','Current scores'],['Standings','Standings'],['Trades','Trades']].map(([name,label])=><button key={name} aria-current={active===name?'page':undefined} onClick={() => { menuRef.current?.close(); navigate(name); headingRef.current?.focus({preventScroll:true}); }}><span>{label}</span><MoveRight size={24} aria-hidden="true"/></button>)}</nav>
-  </dialog><main id="dashboard" ref={mainRef} tabIndex="-1"><div className="workspace-bar"><span>NHL / {seasonLabel(currentYear)}</span><span role="status" aria-live="polite" aria-atomic="true" className={'sync-status' + (active !== 'Home' && healthy ? ' healthy' : '')}><i/>{active === 'Home' ? 'Updates automatically' : loading ? 'Checking sources' : healthy ? `Data up to date${checked ? ` · checked ${checked}` : ''}` : 'Check source status'}</span></div>
+  </header><main id="dashboard" ref={mainRef} tabIndex="-1"><div className="workspace-bar"><span>NHL / {seasonLabel(currentYear)}</span><span role="status" aria-live="polite" aria-atomic="true" className={'sync-status' + (active !== 'Home' && healthy ? ' healthy' : '')}><i/>{active === 'Home' ? 'Updates automatically' : loading ? 'Checking sources' : healthy ? `Data up to date${checked ? ` · checked ${checked}` : ''}` : 'Check source status'}</span></div>
     <div className="page-heading"><div><h1 ref={headingRef} tabIndex="-1">{active === 'Home' ? calendar.data?.phase === 'playoffs' ? 'Stanley Cup Playoffs' : calendar.data?.phase === 'offseason' ? 'NHL offseason' : 'NHL scores & where to watch' : active}</h1></div></div>
     {active === 'Home' && <SeasonHome calendar={calendar} version={version} trades={trades} onCompare={compareTrade} onBrowseTrades={() => navigate('Trades')} offseasonTrade={allTrades[0] && <LatestTrade trade={allTrades[0]} onCompare={compareTrade}/>} standingsPanel={<StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} onViewAll={() => navigate('Standings')}/>}/>}
     {active === 'Trades' && <div className="trades-page"><div className="trade-tabs" aria-label="Trades views"><button aria-pressed={tradeTab === 'wire'} className={tradeTab === 'wire' ? 'selected' : ''} onClick={() => navigate('Trades')}>Trade wire</button><button aria-pressed={tradeTab === 'compare'} className={tradeTab === 'compare' ? 'selected' : ''} onClick={() => navigate('Trades', 'compare', selectedId, true)}>Compare</button></div>{tradeTab === 'wire' ? <TradeWire trades={trades} filtered={filtered} query={query} setQuery={setQuery} selectedTrade={selectedTrade} onCompare={compareTrade} full/> : pendingTrade && trades.loading ? <div className="panel"><Status state={trades}/></div> : <>{pendingTrade && <div className="notice" role="status">That trade is no longer on the wire. You can still compare any two players.</div>}{comparison}</>}</div>}
