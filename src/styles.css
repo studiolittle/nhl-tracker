@@ -352,7 +352,30 @@ tbody .points { padding-right: 6px; }
 :root[data-theme="light"] [style*="--team-color"] { --team-ink: color-mix(in srgb, var(--team-color) 66%, #20252c); }
 .stat-value:has(.stat-winner) i { height: 6px; opacity: 1; border-radius: 3px; }
 .stat-value .stat-winner { font-weight: 700; text-decoration-thickness: 4px; }
-.standings-panel tbody .points { font: 700 1.5rem/1 'Barlow Condensed', sans-serif; background: color-mix(in srgb, var(--team-ink, var(--team-color)) 10%, var(--surface-alt)); }
+/* Quiet standings: aligned numbers and open rows, without team-colour fills. */
+.standings-tabs { display: flex; gap: 24px; margin: 0 24px 24px; border-bottom: 1px solid var(--line); }
+.standings-tabs button { min-height: 48px; padding: 10px 0; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; color: var(--muted); font: inherit; font-size: .9375rem; }
+.standings-tabs button:hover { color: var(--text); }
+.standings-tabs button.selected { border-bottom-color: var(--text); color: var(--text); font-weight: 600; }
+.standings-panel .standings-scroll { padding-inline: 24px; }
+.standings-panel thead th { padding: 12px 12px; font-size: .8125rem; }
+.standings-panel tbody th, .standings-panel tbody td { padding: 20px 12px; }
+.standings-panel tbody th, .standings-panel .team-name { font-weight: 500; }
+.standings-panel tbody td { font-size: 1rem; }
+.standings-panel tbody td:first-child { font-size: .8125rem; }
+.standings-panel th:first-child, .standings-panel td:first-child { padding-left: 0; }
+.standings-panel th:last-child, .standings-panel td:last-child { padding-right: 0; }
+.standings-panel tbody .points { font: 650 1rem/1.5 'DM Sans', sans-serif; color: var(--text); background: transparent; min-width: 48px; }
+.standings-panel tbody th img { margin-right: 12px; }
+.standings-panel .cut-row td { padding: 0; }
+@container (max-width: 560px) {
+  .standings-tabs { gap: 24px; margin-inline: 16px; margin-bottom: 16px; }
+  .standings-panel .standings-scroll { padding-inline: 16px; }
+  .standings-panel thead th { padding-inline: 6px; }
+  .standings-panel tbody th, .standings-panel tbody td { padding: 18px 6px; }
+  .standings-panel tbody th img { margin-right: 8px; }
+  .standings-panel tbody .points { min-width: 32px; }
+}
 .cut-row td { padding: 0; border-bottom: 0; }
 .cut-row span { display: block; position: relative; height: 0; border-top: 2px dashed var(--success); margin: 4px 0; }
 .cut-row span { font-size: 0; }
