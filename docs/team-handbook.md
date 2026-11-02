@@ -161,7 +161,8 @@ Status at November 2, 2026. Check that an issue still exists before acting on it
 
 | Agent | Owns |
 |---|---|
-| `fullstack-lead` | Features, app architecture, splitting up work |
+| `puck` | Team leader: routes work, tracks it, reports to Jesse |
+| `fullstack-lead` | Features and app architecture |
 | `data-reliability-engineer` | Parsers, feeds, data tests |
 | `product-designer` | Interface and design system |
 | `qa-accessibility-specialist` | Testing and accessibility findings |

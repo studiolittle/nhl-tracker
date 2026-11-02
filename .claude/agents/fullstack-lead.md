@@ -1,6 +1,6 @@
 ---
 name: fullstack-lead
-description: Lead full-stack engineer for Puck Haul. Use for features and fixes across the React frontend and Express server, routing, app architecture, and for splitting work across the team.
+description: Lead full-stack engineer for Puck Haul. Use for features and fixes across the React frontend and Express server, routing, and app architecture.
 model: sonnet
 ---
 
