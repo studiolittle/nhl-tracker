@@ -9,6 +9,25 @@ test('trade assets expose every named player while excluding draft picks', () =>
   assert.deepEqual(extractTradePlayers('future considerations'), []);
 });
 
+test('player names survive picks without an article, draft-status labels and comma lists', () => {
+  assert.deepEqual(extractTradePlayers('forward Dawson Mercer, goalie Nicolas Daws, forward Nick Bjugstad, Unsigned Draft Choice forward Alexander Command, 2nd-round pick in the 2029 NHL Draft and a 7th-round pick in the 2027 NHL Draft'), ['Dawson Mercer', 'Nicolas Daws', 'Nick Bjugstad', 'Alexander Command']);
+  assert.deepEqual(extractTradePlayers('forward Jane Doe, a conditional 3rd-round pick in the 2027 NHL Draft'), ['Jane Doe']);
+  assert.deepEqual(extractTradePlayers('forwards Al One, Bo Two and Cy Three'), ['Al One', 'Bo Two', 'Cy Three']);
+  assert.deepEqual(extractTradePlayers('forward Jane Doe and future considerations'), ['Jane Doe']);
+  assert.deepEqual(extractTradePlayers('forward Jane Doe and cash'), ['Jane Doe']);
+  assert.deepEqual(extractTradePlayers('the rights to forward Jane Doe'), ['Jane Doe']);
+  assert.deepEqual(extractTradePlayers('a 2nd- and a 3rd-round pick in the 2027 NHL Draft'), []);
+  assert.deepEqual(extractTradePlayers('7th round pick in the 2028 NHL Draft'), []);
+});
+
+test('tracker entries worded "acquired" are read like "acquire"', () => {
+  const result = parseTrades('<p>OCTOBER 15: Toronto Maple Leafs acquired forward Aatu Räty from the Vancouver Canucks for forwards Brandon Buhr and Jacob Quillan. | Maple Leafs acquire Raty from Canucks</p>', 2026, [{ name: 'Toronto Maple Leafs', abbrev: 'TOR' }]);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].date, '2026-10-15');
+  assert.deepEqual(result[0].receivedPlayers, ['Aatu Räty']);
+  assert.deepEqual(result[0].sentPlayers, ['Brandon Buhr', 'Jacob Quillan']);
+});
+
 test('NHL trade parsing preserves full packages, source links and season rollover', () => {
   const html = '<p>Not a trade</p><p><strong>JANUARY 2:</strong> Toronto Maple Leafs acquire forward Test Player from the Ottawa Senators for a conditional 2nd-round pick in the 2028 NHL Draft. | <a href="https://www.nhl.com/news/test">Details</a></p><p><strong>JULY 1:</strong> Ottawa Senators acquire goalie Another Player from the Toronto Maple Leafs for future considerations.</p>';
   const result = parseTrades(html, 2026, [{ name: 'Toronto Maple Leafs', abbrev: 'TOR' }]);
