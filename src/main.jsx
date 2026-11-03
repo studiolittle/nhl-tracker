@@ -4,6 +4,8 @@ import { ArrowLeft, ArrowLeftRight, ArrowUpRight, CircleHelp, LayoutDashboard, C
 import './styles.css';
 import PlayerPicker from './PlayerPicker.jsx';
 import SeasonHome, { useHomeFeed } from './SeasonHome.jsx';
+import { matchesSearch } from './lib/search.js';
+import { feedStart, feedRefresh, feedLoaded, feedFailed } from './lib/feed.js';
 
 const teamColors = { ANA: '#f47a38', BOS: '#efb92b', BUF: '#3688dc', CAR: '#e14755', CBJ: '#507bbb', CGY: '#eb5358', CHI: '#e04f55', COL: '#a2597b', DAL: '#35ad83', DET: '#ec4c59', EDM: '#f58a42', FLA: '#d19757', LAK: '#a5abb5', MIN: '#55a68c', MTL: '#e45b71', NJD: '#e44e59', NSH: '#e3b538', NYI: '#f47f43', NYR: '#468cdd', OTT: '#de615c', PHI: '#f88146', PIT: '#e4c552', SEA: '#62b5c7', SJS: '#40b2b0', STL: '#5599e4', TBL: '#5698e8', TOR: '#4d8dda', UTA: '#79b8d2', VAN: '#55a0d4', VGK: '#bfaa79', WPG: '#6d9ec7', WSH: '#dc5c6b' };
 const teamStyle = team => ({ '--team-color': teamColors[team?.abbrev] || '#8b9aa8' });
@@ -32,7 +34,8 @@ const currentYear = new Date().getUTCFullYear() - (new Date().getUTCMonth() < 6 
 const seasonLabel = year => `${year}–${String(year + 1).slice(-2)}`;
 const dateLabel = date => new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 async function getJson(url, signal) {
-  const response = await fetch(url, { signal });
+  let response;
+  try { response = await fetch(url, { signal }); } catch (error) { throw error.name === 'AbortError' ? error : new Error('Could not reach the data source. Check your connection and try again.'); }
   const raw = await response.text();
   let data;
   try {
@@ -44,20 +47,21 @@ async function getJson(url, signal) {
   return data;
 }
 function useData(url, version = 0) {
-  const [state, setState] = useState({ data: null, loading: true, error: '' });
+  const [state, setState] = useState(() => feedStart(url));
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
     if (!url) {
-      setState({ data: null, loading: false, error: '' });
+      setState(feedStart(null));
       return () => controller.abort();
     }
-    setState(previous => ({ ...previous, loading: true, error: '' }));
-    getJson(url, controller.signal).then(data => setState({ data, loading: false, error: '' })).catch(error => {
-      if (error.name !== 'AbortError') setState(previous => ({ ...previous, loading: false, error: error.message }));
+    setState(previous => feedRefresh(previous, url));
+    getJson(url, controller.signal).then(data => setState(feedLoaded(url, data))).catch(error => {
+      if (error.name !== 'AbortError') setState(previous => feedFailed(previous, url, error.message));
     });
     return () => controller.abort();
-  }, [url, version]);
-  return state;
+  }, [url, version, attempt]);
+  return { ...state, retry: () => setAttempt(value => value + 1) };
 }
 function usePlayersData(players, season, version = 0) {
   const ids = players.map(player => player?.id || '').join(',');
@@ -87,9 +91,10 @@ function Logo({ team, size = 32, eager }) {
   return failed ? <span className="team-fallback" style={{ width: size }}>{team.abbrev}</span> : <img className="team-logo" src={team.logo || `https://assets.nhle.com/logos/nhl/svg/${team.abbrev}_light.svg`} alt="" width={size} height={size} loading={eager ? 'eager' : 'lazy'} onError={() => setFailed(true)} />;
 }
 function Status({ state, children }) {
-  if (state.loading) return <div className="empty-state" role="status"><RefreshCw className="spin" size={19} /> Loading official NHL data…</div>;
-  if (state.error) return <div className="empty-state error" role="alert"><CircleHelp size={21} /><span>{state.error}</span></div>;
-  return <>{state.data?.stale && <div className="notice">Showing saved data from {new Date(state.data.fetchedAt).toLocaleString()}. The source is temporarily unavailable.</div>}{children}</>;
+  if (state.loading && !state.data) return <div className="empty-state" role="status"><RefreshCw className="spin" size={19} /> Loading official NHL data…</div>;
+  if (state.error && !state.data) return <div className="empty-state error" role="alert"><CircleHelp size={21} /><span>{state.error}</span>{state.retry && <button className="text-button" onClick={state.retry}>Try again</button>}</div>;
+  const saved = state.data?.fetchedAt ? ` from ${new Date(state.data.fetchedAt).toLocaleString()}` : '';
+  return <>{state.error ? <div className="notice" role="status">Couldn’t refresh. Showing saved data{saved}. {state.retry && <button className="text-button" onClick={state.retry}>Try again</button>}</div> : state.data?.stale && <div className="notice">Showing saved data from {new Date(state.data.fetchedAt).toLocaleString()}. The source is temporarily unavailable.</div>}{children}</>;
 }
 function tradePlayerNames(text = '') {
   let value = text.replace(/\.$/, '').trim();
@@ -335,7 +340,7 @@ function App() {
   const teams = standings.data?.teams || [];
   const allTrades = trades.data?.trades || [];
   const selectedTrade = selectedId ? allTrades.find(t => t.id === selectedId) || null : null;
-  const filtered = allTrades.filter(t => `${t.to.name} ${t.from.name} ${t.received} ${t.sent}`.toLowerCase().includes(query.toLowerCase()));
+  const filtered = allTrades.filter(t => matchesSearch(`${t.to.name} ${t.from.name} ${t.received} ${t.sent}`, query));
   const rows = confRows(teams, conference);
   const navigate = (name, tab = 'wire', id = null, focus = false) => {
     setFocusPicker(focus);

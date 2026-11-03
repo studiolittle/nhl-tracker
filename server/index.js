@@ -2,29 +2,13 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { seasonStart, trackerUrl, parseTrades, playerStats, hasRecentNhlGames } from './nhl.js';
+import { createCache } from './cache.js';
 import { easternDate, getSeasonContext, normalizeGames, normalizePlayoffSeries, parsePlayerNews } from './home.js';
 
 const app = express();
 export default app;
 const root = fileURLToPath(new URL('../', import.meta.url));
-const cache = new Map();
-const pending = new Map();
-async function cached(key, loader, ttl = 300_000) {
-  const old = cache.get(key);
-  if (old && Date.now() - old.time < ttl) return { ...old.value, stale: false, fetchedAt: new Date(old.time).toISOString() };
-  if (pending.has(key)) return pending.get(key);
-  const request = (async () => {
-    try {
-      const value = await loader(); const time = Date.now(); cache.set(key, { value, time });
-      return { ...value, stale: false, fetchedAt: new Date(time).toISOString() };
-    } catch (error) {
-      if (old) return { ...old.value, stale: true, fetchedAt: new Date(old.time).toISOString() };
-      throw error;
-    } finally { pending.delete(key); }
-  })();
-  pending.set(key, request);
-  return request;
-}
+const cached = createCache();
 async function fetchNhl(url, json = true) {
   const response = await fetch(url, { signal: AbortSignal.timeout(15_000), headers: { 'User-Agent': 'PuckHaul-NHL-Dashboard/0.1', Accept: json ? 'application/json' : 'text/html' } });
   if (!response.ok) throw new Error(`NHL returned ${response.status}`);
@@ -42,7 +26,9 @@ async function standings() {
     })).sort((a, b) => a.rank - b.rank) };
   });
 }
-const route = (fn, cacheControl) => async (req, res) => { try { const body = await fn(req); if (cacheControl && !body.stale) res.set('Cache-Control', cacheControl); res.json(body); } catch (error) { console.error(error.message); res.status(502).json({ error: 'The NHL source is temporarily unavailable. Please try again.' }); } };
+// A request the visitor got wrong is a 400 with its own message; only upstream failures read as "NHL unavailable".
+const badRequest = message => Object.assign(new Error(message), { status: 400 });
+const route = (fn, cacheControl) => async (req, res) => { try { const body = await fn(req); if (cacheControl && !body.stale) res.set('Cache-Control', cacheControl); res.json(body); } catch (error) { if (error.status === 400) return res.status(400).json({ error: error.message }); console.error(error.message); res.status(502).json({ error: 'The NHL source is temporarily unavailable. Please try again.' }); } };
 app.get('/api/standings', route(() => standings()));
 async function seasonCalendar() {
   return cached('season-calendar', () => fetchNhl('https://api-web.nhle.com/v1/schedule/now'), 3_600_000);
@@ -55,7 +41,7 @@ app.get('/api/scores', route(async req => {
   const requested = String(req.query.date || 'now');
   const today = easternDate();
   if (requested !== 'now' && (!/^\d{4}-\d{2}-\d{2}$/.test(requested) || !Number.isFinite(Date.parse(requested)) || Math.abs(Date.parse(requested) - Date.parse(today)) > 370 * 86_400_000 || new Date(requested).toISOString().slice(0, 10) !== requested)) {
-    return { error: 'Choose a valid game date within one year of today.', games: [] };
+    throw badRequest('Choose a valid game date within one year of today.');
   }
   // Date-bounded cache keys; current scores expire after 30 seconds.
   return cached(`scores-${requested === 'now' ? today : requested}`, async () => {
@@ -127,9 +113,9 @@ app.get('/api/players/search', route(async req => {
   return { players: players.filter(p => tokens.every(token => normalize(p.name).includes(token))).sort((a, b) => Number(b.active) - Number(a.active)).slice(0, 8).map(p => ({ id: p.playerId, name: p.name, team: p.teamAbbrev, position: p.positionCode })) };
 }));
 app.get('/api/players/:id', route(async req => {
-  if (!/^\d{7}$/.test(req.params.id)) throw new Error('Invalid player ID');
+  if (!/^\d{7}$/.test(req.params.id)) throw badRequest('Invalid player ID');
   const start = Number(req.query.season || seasonStart() - 1);
-  if (!Number.isInteger(start) || start < 1917 || start > seasonStart()) throw new Error('Invalid season');
+  if (!Number.isInteger(start) || start < 1917 || start > seasonStart()) throw badRequest('Invalid season');
   return cached(`player-${req.params.id}-${start}`, async () => {
     const player = await fetchNhl(`https://api-web.nhle.com/v1/player/${req.params.id}/landing`);
     return { player: playerStats(player, start * 10000 + start + 1) };

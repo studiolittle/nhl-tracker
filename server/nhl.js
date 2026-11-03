@@ -8,16 +8,14 @@ export function trackerUrl(year = seasonStart()) {
 }
 
 export function extractTradePlayers(text = '') {
-  let value = text.replace(/\.$/, '').trim();
-  if (!value || /future considerations/i.test(value)) return [];
-  // Draft picks and conditions are assets, not player names. Remove them before
-  // splitting the remaining role-labelled player groups.
-  value = value.split(/\s+and\s+(?:a|an)\s+\d+(?:st|nd|rd|th)-round pick/i)[0];
-  value = value.split(/\s*,?\s+(?:a|an)\s+\d+(?:st|nd|rd|th)-round pick/i)[0];
-  const groups = value.replace(/\b(?:forwards?|defensemen?|defenseman|goaltenders?|goalies?|centers?|centre)\b/gi, '|').split('|');
-  return groups.flatMap(group => group.split(/\s+and\s+/i))
-    .map(name => name.replace(/^(?:a|an)\s+/i, '').replace(/[\s,]+$/, '').trim())
-    .filter(name => name && !/round pick|future considerations|consideration/i.test(name));
+  const value = text.replace(/\.$/, '').trim();
+  // Role and draft-status labels separate players. Every list item is then checked
+  // on its own, so a pick or other asset cannot take a player out with it.
+  const groups = value.replace(/\b(?:forwards?|defensemen?|defenseman|goaltenders?|goalies?|centers?|centre|unsigned draft choice)\b/gi, '|').split('|');
+  return groups.flatMap(group => group.split(/,|\s+and\s+/i))
+    .map(name => name.replace(/^\s*(?:a|an)\s+/i, '').trim())
+    // Names start with a capital; picks, cash and "the rights to" do not.
+    .filter(name => /^\p{Lu}/u.test(name) && !/round pick|consideration/i.test(name));
 }
 
 export function parseTrades(html, year, teams) {
@@ -25,7 +23,7 @@ export function parseTrades(html, year, teams) {
   const trades = [];
   $('p').each((_, element) => {
     const text = $(element).text().replace(/\s+/g, ' ').trim();
-    const match = text.match(/^([A-Z]+) (\d{1,2}):\s*(.+?) acquire (.+?) from (?:the )?(.+?) (?:for|in exchange for) (.+?)(?:\s*\||$)/);
+    const match = text.match(/^([A-Z]+) (\d{1,2}):\s*(.+?) acquired? (.+?) from (?:the )?(.+?) (?:for|in exchange for) (.+?)(?:\s*\||$)/);
     if (!match) return;
     const [, month, day, to, received, from, sent] = match;
     const monthIndex = new Date(`${month} 1, 2000`).getMonth();
