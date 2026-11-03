@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Search, Star } from 'lucide-react';
 import { readPreferences, savePreferences } from './lib/favourites.js';
+import { matchesSearch } from './lib/search.js';
 
 const getStorage = () => window.localStorage;
 
@@ -17,10 +18,9 @@ export function useFavouriteTeams() {
 export default function FavouriteTeams({ favourites, teamsFeed, onRetry, open, setOpen }) {
   const [query, setQuery] = useState('');
   const manageButton = useRef(null);
-  const searchText = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const { preferences, setPreferences, unavailable } = favourites;
   const teams = (teamsFeed.data?.teams || []).toSorted((a, b) => a.name.localeCompare(b.name));
-  const shown = teams.filter(team => searchText(`${team.name} ${team.abbrev}`).includes(searchText(query.trim())));
+  const shown = teams.filter(team => matchesSearch(`${team.name} ${team.abbrev}`, query));
   const toggle = abbrev => setPreferences(previous => ({
     filter: 'favourites',
     teams: previous.teams.includes(abbrev) ? previous.teams.filter(team => team !== abbrev) : [...previous.teams, abbrev],
