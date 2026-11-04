@@ -5,6 +5,7 @@ import './styles.css';
 import PlayerPicker from './PlayerPicker.jsx';
 import SeasonHome, { useHomeFeed } from './SeasonHome.jsx';
 import { matchesSearch } from './lib/search.js';
+import { conferenceRows, divisionGroups, gamesDiffer, noGamesYet, wildCardGroups } from './lib/standings.js';
 import { feedStart, feedRefresh, feedLoaded, feedFailed } from './lib/feed.js';
 
 const teamColors = { ANA: '#f47a38', BOS: '#efb92b', BUF: '#3688dc', CAR: '#e14755', CBJ: '#507bbb', CGY: '#eb5358', CHI: '#e04f55', COL: '#a2597b', DAL: '#35ad83', DET: '#ec4c59', EDM: '#f58a42', FLA: '#d19757', LAK: '#a5abb5', MIN: '#55a68c', MTL: '#e45b71', NJD: '#e44e59', NSH: '#e3b538', NYI: '#f47f43', NYR: '#468cdd', OTT: '#de615c', PHI: '#f88146', PIT: '#e4c552', SEA: '#62b5c7', SJS: '#40b2b0', STL: '#5599e4', TBL: '#5698e8', TOR: '#4d8dda', UTA: '#79b8d2', VAN: '#55a0d4', VGK: '#bfaa79', WPG: '#6d9ec7', WSH: '#dc5c6b' };
@@ -281,21 +282,27 @@ function TradeWire({ trades, filtered, query, setQuery, selectedTrade, onCompare
     <div className="panel-foot"><span>Updates every 5 minutes</span><a href={trades.data?.source || 'https://www.nhl.com/news/topic/trade-coverage/'} target="_blank" rel="noreferrer">Trade tracker<ArrowUpRight size={15}/></a></div>
   </section>;
 }
-const confRows = (teams, conference) => {
-  const rows = teams.filter(t => conference === 'All' || t.conference === conference);
-  const inPlayoffs = t => t.wildcardSequence <= 2;
-  return conference === 'All' ? rows : [...rows].sort((x, y) => Number(!inPlayoffs(x)) - Number(!inPlayoffs(y)) || x.conferenceSequence - y.conferenceSequence);
-};
-function StandingsPanel({ standings, teams, rows, conference, setConference, full, onViewAll, title = 'Standings' }) {
+function StandingRow({ team, lead, chip }) {
+  return <tr><td>{lead}</td><th scope="row"><Logo team={team} size={28}/><span className="abbr" aria-hidden="true">{team.abbrev}</span><span className="team-name">{team.name}</span>{chip}</th><td>{team.gamesPlayed}</td><td>{team.wins}–{team.losses}–{team.otLosses}</td><td className="points">{team.points}</td></tr>;
+}
+const seedCell = seed => <><span className={'seed-tag ' + seed.group} aria-hidden="true">{seed.tag || '–'}</span><span className="sr-only">{seed.phrase[0].toUpperCase() + seed.phrase.slice(1)}</span></>;
+const wildCardChip = seed => seed.group === 'wildcard' && <><span className={'seed-tag wildcard chip'} aria-hidden="true">{seed.tag}</span><span className="sr-only"> ({seed.phrase})</span></>;
+function StandingsPanel({ standings, teams, rows, conference, setConference, view, setView, full, onViewAll, title = 'Standings' }) {
+  const preseason = noGamesYet(teams);
+  const seeded = full && conference !== 'All' && !preseason;
+  const groups = seeded ? (view === 'division' ? divisionGroups(teams, conference) : wildCardGroups(teams, conference)) : null;
   const shown = full ? rows : rows.slice(0, 8);
-  const preseason = teams.length > 0 && teams.every(t => t.gamesPlayed === 0);
-  const showPlayoffs = conference !== 'All' && !preseason;
+  const checked = standings.data?.fetchedAt ? new Date(standings.data.fetchedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
   return <section className="panel standings-panel" id={`standings-${conference}`}><div className="section-heading"><div className="heading-icon"><h2>{title}</h2></div><span className="quiet-label">{standings.data?.season ? seasonLabel(Math.floor(standings.data.season / 10000)) : seasonLabel(currentYear)}</span></div>
     {setConference && <div className="standings-tabs" role="group" aria-label="Standings conference">{['All', 'Eastern', 'Western'].map(c => <button aria-pressed={conference === c} className={conference === c ? 'selected' : ''} key={c} onClick={() => setConference(c)}>{c === 'All' ? 'League' : c}</button>)}</div>}
+    {full && conference !== 'All' && setView && <div className="standings-view" role="group" aria-label="Standings grouping">{[['wildcard', 'Wild card'], ['division', 'Division']].map(([key, label]) => <button aria-pressed={view === key} className={view === key ? 'selected' : ''} key={key} onClick={() => setView(key)}>{label}</button>)}</div>}
     {preseason && <p className="preseason-note">Regular-season points start at zero.</p>}
-    {showPlayoffs && <p className="preseason-note">Teams above the line are in a playoff position.</p>}
-    <Status state={standings}><div className="standings-scroll" tabIndex="0" role="region" aria-label={`Scrollable ${title.toLowerCase()}`}><table><caption className="sr-only">{conference === 'All' ? 'League' : conference} standings: games played, wins, losses, overtime losses, and points.</caption><thead><tr><th scope="col">#</th><th scope="col">Team</th><th scope="col">GP<span className="sr-only"> (games played)</span></th><th scope="col">W–L–OT</th><th scope="col">PTS<span className="sr-only"> (points)</span></th></tr></thead><tbody>{shown.map((t, i) => <React.Fragment key={t.abbrev}><tr><td>{i + 1}</td><th scope="row"><Logo team={t} size={28}/><span className="abbr" aria-hidden="true">{t.abbrev}</span><span className="team-name">{t.name}</span>{showPlayoffs && t.wildcardSequence <= 2 && <span className="sr-only"> (in a playoff position)</span>}</th><td>{t.gamesPlayed}</td><td>{t.wins}–{t.losses}–{t.otLosses}</td><td className="points">{t.points}</td></tr>{showPlayoffs && t.wildcardSequence <= 2 && shown[i + 1] && shown[i + 1].wildcardSequence > 2 && <tr className="cut-row" aria-hidden="true"><td colSpan="5"><span>Playoff line</span></td></tr>}</React.Fragment>)}</tbody></table></div></Status>
-    <div className="panel-foot">{!full && rows.length > 0 && <button className="text-button" onClick={onViewAll}>View all {rows.length} teams <MoveRight size={15}/></button>}<span>{standings.data?.date ? `As of ${dateLabel(standings.data.date)}` : 'Regular season'}</span><a href="https://www.nhl.com/standings" target="_blank" rel="noreferrer">NHL.com<ArrowUpRight size={15}/></a></div>
+    {groups && view !== 'division' && <p className="preseason-note">WC1 and WC2 are the last two playoff spots in each conference.</p>}
+    {seeded && standings.data && !groups && <p className="preseason-note" role="status">Wild card positions are unavailable from the NHL right now. Teams are shown in conference order.</p>}
+    <Status state={standings}><div className={'standings-scroll' + (full ? '' : ' compact')} tabIndex="0" role="region" aria-label={`Scrollable ${title.toLowerCase()}`}><table><caption className="sr-only">{conference === 'All' ? 'League' : conference} standings{groups ? `, grouped by ${view === 'division' ? 'division' : 'division, wild card and out'}` : ''}: games played, wins, losses, overtime losses, and points.</caption><thead><tr><th scope="col">{groups && view !== 'division' ? 'Seed' : '#'}</th><th scope="col">Team</th><th scope="col">GP<span className="sr-only"> (games played)</span></th><th scope="col">W–L–OT</th><th scope="col">PTS<span className="sr-only"> (points)</span></th></tr></thead>
+      {groups ? groups.map(group => <tbody key={group.key}><tr className="group-row"><th scope="colgroup" colSpan="5">{group.label}</th></tr>{group.entries.map(({ team, seed }) => <StandingRow key={team.abbrev} team={team} lead={view === 'division' ? team.divisionSequence : seedCell(seed)} chip={view === 'division' && wildCardChip(seed)}/>)}</tbody>)
+        : <tbody>{shown.map((t, i) => <StandingRow key={t.abbrev} team={t} lead={i + 1}/>)}</tbody>}</table></div></Status>
+    <div className="panel-foot">{!full && rows.length > 0 && <button className="text-button" onClick={onViewAll}>View all {rows.length} teams <MoveRight size={15}/></button>}<span>{standings.data?.date ? `As of ${dateLabel(standings.data.date)}${checked ? ` · checked ${checked}` : ''}${gamesDiffer(teams) ? ' · teams have played different numbers of games' : ''}` : 'Regular season'}</span><a href="https://www.nhl.com/standings" target="_blank" rel="noreferrer">NHL.com<ArrowUpRight size={15}/></a></div>
   </section>;
 }
 const viewFromHash = () => window.location.hash.startsWith('#trades') ? 'Trades' : window.location.hash === '#standings' ? 'Standings' : 'Home';
@@ -315,6 +322,7 @@ function App() {
   const calendar = useHomeFeed('/api/season', version);
   const [query, setQuery] = useState('');
   const [conference, setConference] = useState('All');
+  const [standingsView, setStandingsView] = useState('wildcard');
   const [selectedId, setSelectedId] = useState(tradeIdFromHash);
   const [active, setActive] = useState(viewFromHash);
   const [tradeTab, setTradeTab] = useState(tradeTabFromHash);
@@ -341,7 +349,7 @@ function App() {
   const allTrades = trades.data?.trades || [];
   const selectedTrade = selectedId ? allTrades.find(t => t.id === selectedId) || null : null;
   const filtered = allTrades.filter(t => matchesSearch(`${t.to.name} ${t.from.name} ${t.received} ${t.sent}`, query));
-  const rows = confRows(teams, conference);
+  const rows = conferenceRows(teams, conference);
   const navigate = (name, tab = 'wire', id = null, focus = false) => {
     setFocusPicker(focus);
     setActive(name); setTradeTab(tab);
@@ -364,7 +372,7 @@ function App() {
     <div className="page-heading"><div><h1 ref={headingRef} tabIndex="-1">{active === 'Home' ? calendar.data?.phase === 'playoffs' ? 'Stanley Cup Playoffs' : calendar.data?.phase === 'offseason' ? 'NHL offseason' : 'NHL scores & where to watch' : active}</h1></div></div>
     {active === 'Home' && <SeasonHome teamsFeed={standings} onRetryTeams={() => setVersion(v => v + 1)} calendar={calendar} version={version} trades={trades} onCompare={compareTrade} onBrowseTrades={() => navigate('Trades')} offseasonTrade={allTrades[0] && <LatestTrade trade={allTrades[0]} onCompare={compareTrade}/>} standingsPanel={<StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} onViewAll={() => navigate('Standings')}/>}/>}
     {active === 'Trades' && <div className="trades-page"><div className="trade-tabs" aria-label="Trades views"><button aria-pressed={tradeTab === 'wire'} className={tradeTab === 'wire' ? 'selected' : ''} onClick={() => navigate('Trades')}>Trade wire</button><button aria-pressed={tradeTab === 'compare'} className={tradeTab === 'compare' ? 'selected' : ''} onClick={() => navigate('Trades', 'compare', selectedId, true)}>Compare</button></div>{tradeTab === 'wire' ? <TradeWire trades={trades} filtered={filtered} query={query} setQuery={setQuery} selectedTrade={selectedTrade} onCompare={compareTrade} full/> : pendingTrade && trades.loading ? <div className="panel"><Status state={trades}/></div> : <>{pendingTrade && <div className="notice" role="status">That trade is no longer on the wire. You can still compare any two players.</div>}{comparison}</>}</div>}
-    {active === 'Standings' && <div className="standings-page"><StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} full/></div>}
+    {active === 'Standings' && <div className="standings-page"><StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} view={standingsView} setView={setStandingsView} full/></div>}
     <footer><span>Built by Jesse Little · Puck Haul is in alpha, so features and data may change.</span><a href="https://studiolittle.ca" target="_blank" rel="noreferrer">studiolittle.ca <ArrowUpRight size={15}/></a></footer>
   </main></div>;
 }
