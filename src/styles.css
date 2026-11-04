@@ -371,7 +371,6 @@ tbody .points { padding-right: 6px; }
 .standings-panel th:last-child, .standings-panel td:last-child { padding-right: 0; }
 .standings-panel tbody .points { font: 650 1rem/1.5 'Manrope', sans-serif; color: var(--text); background: transparent; min-width: 48px; }
 .standings-panel tbody th img { margin-right: 12px; }
-.standings-panel .cut-row td { padding: 0; }
 @container (max-width: 560px) {
   .standings-tabs { gap: 24px; margin-inline: 16px; margin-bottom: 16px; }
   .standings-panel .standings-scroll { padding-inline: 16px; }
@@ -380,9 +379,6 @@ tbody .points { padding-right: 6px; }
   .standings-panel tbody th img { margin-right: 8px; }
   .standings-panel tbody .points { min-width: 32px; }
 }
-.cut-row td { padding: 0; border-bottom: 0; }
-.cut-row span { display: block; position: relative; height: 0; border-top: 2px dashed var(--success); margin: 4px 0; }
-.cut-row span { font-size: 0; }
 
 /* Keep comparison choices and results together. */
 .comparison-summary { padding-bottom: 12px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
@@ -475,3 +471,17 @@ html { scrollbar-color: var(--line-strong) var(--canvas); }
   .player-details h3 { font-size: clamp(.9375rem, 4vw, 1.25rem); line-height: 1.3; }
   .stat-value strong { font-size: 1.5rem; }
 }
+
+/* Standings: Home shows eight plain rows without an inner scroll; the full page groups teams under labelled headers. */
+.standings-scroll.compact { max-height: none; overflow: visible; }
+.standings-view { display: flex; gap: 8px; margin: 0 24px 16px; }
+.standings-view button { min-height: 44px; padding: 8px 16px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--muted); font: inherit; font-size: .9375rem; }
+.standings-view button:hover { color: var(--text); border-color: var(--line-strong); }
+.standings-view button.selected { border-color: var(--accent); background: var(--selected); color: var(--accent); font-weight: 650; }
+.standings-panel .group-row th { padding: 20px 0 8px; border-bottom: 1px solid var(--line-strong); color: var(--muted); font-size: .8125rem; font-weight: 650; letter-spacing: .04em; text-align: left; text-transform: uppercase; }
+.standings-panel tbody:first-of-type .group-row th { padding-top: 8px; }
+.seed-tag { display: inline-block; min-width: 2.5em; font: 650 .8125rem/1.4 'Manrope', sans-serif; color: var(--text); }
+.seed-tag.wildcard { color: var(--accent); }
+.seed-tag.chip { min-width: 0; margin-left: 8px; padding: 1px 6px; border: 1px solid var(--accent); border-radius: 4px; font-size: .75rem; }
+@container (max-width: 400px) { .seed-tag.chip { margin-left: 4px; padding: 0 4px; font-size: .6875rem; } .standings-panel tbody th, .standings-panel tbody td, .standings-panel thead th { padding-inline: 4px; } .standings-panel th:first-child, .standings-panel td:first-child { padding-left: 0; } .standings-panel th:last-child, .standings-panel td:last-child { padding-right: 0; } }
+@media (max-width: 760px) { .standings-view { margin-inline: 16px; } }
