@@ -1,7 +1,7 @@
 import express from 'express';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { seasonStart, trackerUrl, parseTrades, playerStats, hasRecentNhlGames } from './nhl.js';
+import { seasonStart, trackerUrl, readTrackers, isQuietPeriod, playerStats, hasRecentNhlGames } from './nhl.js';
 import { createCache } from './cache.js';
 import { easternDate, getSeasonContext, normalizeGames, normalizePlayoffSeries, parsePlayerNews } from './home.js';
 
@@ -13,6 +13,13 @@ async function fetchNhl(url, json = true) {
   const response = await fetch(url, { signal: AbortSignal.timeout(15_000), headers: { 'User-Agent': 'PuckHaul-NHL-Dashboard/0.1', Accept: json ? 'application/json' : 'text/html' } });
   if (!response.ok) throw new Error(`NHL returned ${response.status}`);
   return json ? response.json() : response.text();
+}
+// NHL.com sends a page that does not exist yet to an error page. That is "not published", not an empty tracker.
+async function fetchTracker(year) {
+  const response = await fetch(trackerUrl(year), { redirect: 'manual', signal: AbortSignal.timeout(15_000), headers: { 'User-Agent': 'PuckHaul-NHL-Dashboard/0.1', Accept: 'text/html' } });
+  if (response.status === 404 || (response.status >= 300 && response.status < 400)) return null;
+  if (!response.ok) throw new Error(`NHL returned ${response.status}`);
+  return response.text();
 }
 async function standings() {
   return cached('standings', async () => {
@@ -96,10 +103,15 @@ async function onlyNhlTrades(trades, year, budgetMs = 7000) {
 app.get('/api/trades', route(async () => {
   const year = seasonStart();
   return cached(`trades-${year}`, async () => {
-    const [html, table] = await Promise.all([fetchNhl(trackerUrl(year), false), standings()]);
-    const trades = await onlyNhlTrades(parseTrades(html, year, table.teams), year);
-    if (!trades.length) throw new Error('No trades could be read from the official tracker');
-    return { season: `${year}–${String(year + 1).slice(-2)}`, trades, source: trackerUrl(year) };
+    const [currentHtml, table] = await Promise.all([fetchTracker(year), standings()]);
+    // The previous tracker is only needed while the new one is missing or the offseason is quiet.
+    const previousHtml = currentHtml == null ? await fetchTracker(year - 1)
+      : isQuietPeriod() ? await fetchTracker(year - 1).catch(() => null) : null;
+    const { quiet, ...read } = readTrackers({ year, currentHtml, previousHtml, teams: table.teams });
+    const trades = await onlyNhlTrades(read.trades, year);
+    // A quiet offseason can leave nothing to show; at any other time an empty wire means something broke.
+    if (!trades.length && !quiet) throw new Error('No trades could be read from the official tracker');
+    return { ...read, trades };
   });
 }, 'public, s-maxage=300, stale-while-revalidate=3600'));
 app.get('/api/players/search', route(async req => {
