@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { seasonStart, trackerUrl, readTrackers, isQuietPeriod, playerStats, hasRecentNhlGames } from './nhl.js';
 import { createCache, edgeCache } from './cache.js';
+import { NHL_TEAMS } from './teams.js';
 import { easternDate, getSeasonContext, normalizeGames, normalizePlayoffSeries, parsePlayerNews } from './home.js';
 
 const app = express();
@@ -106,7 +107,8 @@ async function onlyNhlTrades(trades, year, budgetMs = 7000) {
 app.get('/api/trades', route(async () => {
   const year = seasonStart();
   return cached(`trades-${year}`, async () => {
-    const [currentHtml, table] = await Promise.all([fetchTracker(year), standings()]);
+    // Standings only add logos here, so a standings outage falls back to the built-in team table instead of failing the wire.
+    const [currentHtml, table] = await Promise.all([fetchTracker(year), standings().catch(() => ({ teams: NHL_TEAMS }))]);
     // The previous tracker is only needed while the new one is missing or the offseason is quiet.
     const previousHtml = currentHtml == null ? await fetchTracker(year - 1)
       : isQuietPeriod() ? await fetchTracker(year - 1).catch(() => null) : null;

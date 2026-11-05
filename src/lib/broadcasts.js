@@ -1,5 +1,5 @@
 // Rights references and Ottawa territory notes: docs/seasonal-home-research.md.
-const networkNames = { SN: 'Sportsnet', SNE: 'Sportsnet East', SNO: 'Sportsnet Ontario', SNW: 'Sportsnet West', SNP: 'Sportsnet Pacific', SN1: 'Sportsnet One', SN360: 'Sportsnet 360', 'SN+': 'Sportsnet+', TVAS: 'TVA Sports', TVAS2: 'TVA Sports 2', RDSI: 'RDS Info', NHLN: 'NHL Network', Prime: 'Prime Video', PRIME: 'Prime Video', 'Amazon Prime': 'Prime Video' };
+const networkNames = { SN: 'Sportsnet', SNE: 'Sportsnet East', SNO: 'Sportsnet Ontario', SNW: 'Sportsnet West', SNP: 'Sportsnet Pacific', SN1: 'Sportsnet One', SN360: 'Sportsnet 360', 'SN+': 'Sportsnet+', TVAS: 'TVA Sports', TVAS2: 'TVA Sports 2', RDS: 'RDS', RDS2: 'RDS 2', RDSI: 'RDS Info', NHLN: 'NHL Network', Prime: 'Prime Video', PRIME: 'Prime Video', 'Amazon Prime': 'Prime Video' };
 const streaming = new Set(['Prime', 'PRIME', 'Prime Video', 'Amazon Prime', 'SN+', 'Sportsnet+', 'ESPN+', 'Hulu', 'Victory+', 'MNMT+']);
 const ottawaTeams = new Set(['OTT', 'MTL']);
 export const broadcastGuide = 'https://www.nhl.com/info/watch-nhl-zipcode-blackout-lookup';
