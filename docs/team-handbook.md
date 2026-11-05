@@ -143,7 +143,7 @@ Status at November 2, 2026. Check that an issue still exists before acting on it
 
 9. **Fixed (refresh flash).** Data stays on screen during a refresh, and a failed refresh keeps it with a notice and Try again. The 5-minute and 30-second timers pause in hidden tabs and refresh on return (`src/lib/polling.js`).
 10. **Confirmed: dead CSS.** No component uses `.mobile-navigation`, `.menu-toggle`, `.segmented`, `.dashboard-grid`, `.verdict` or `.latest-foot`. The full-screen phone menu was replaced by persistent tabs.
-11. **Confirmed: no visible independence notice.** "Independent" appears only in the README and JSON-LD. The footer has no statement that the site is unaffiliated with the NHL or its teams, and the trade wire shows "Official NHL tracker" with a shield icon.
+11. **Fixed.** The footer and the no-JavaScript page say Puck Haul is an independent fan project, not affiliated with or endorsed by the NHL. "Official NHL tracker" and the shield are now "Source: NHL.com trade tracker", and other "official" wording is gone. `server/wording.test.js` guards it. Legal wording not yet confirmed by a lawyer.
 12. **Confirmed: grammar.** Plural team names read "Nashville Predators gets".
 13. **Confirmed: date formats differ.** `src/main.jsx` formats dates as en-US and `src/SeasonHome.jsx` as en-CA.
 

@@ -9,14 +9,15 @@ const app = express();
 export default app;
 const root = fileURLToPath(new URL('../', import.meta.url));
 const cached = createCache();
+const USER_AGENT = 'PuckHaul-NHL-Dashboard/0.1 (+https://puckhaul.app)'; // Names the site, with no personal contact.
 async function fetchNhl(url, json = true) {
-  const response = await fetch(url, { signal: AbortSignal.timeout(15_000), headers: { 'User-Agent': 'PuckHaul-NHL-Dashboard/0.1', Accept: json ? 'application/json' : 'text/html' } });
+  const response = await fetch(url, { signal: AbortSignal.timeout(15_000), headers: { 'User-Agent': USER_AGENT, Accept: json ? 'application/json' : 'text/html' } });
   if (!response.ok) throw new Error(`NHL returned ${response.status}`);
   return json ? response.json() : response.text();
 }
 // NHL.com sends a page that does not exist yet to an error page. That is "not published", not an empty tracker.
 async function fetchTracker(year) {
-  const response = await fetch(trackerUrl(year), { redirect: 'manual', signal: AbortSignal.timeout(15_000), headers: { 'User-Agent': 'PuckHaul-NHL-Dashboard/0.1', Accept: 'text/html' } });
+  const response = await fetch(trackerUrl(year), { redirect: 'manual', signal: AbortSignal.timeout(15_000), headers: { 'User-Agent': USER_AGENT, Accept: 'text/html' } });
   if (response.status === 404 || (response.status >= 300 && response.status < 400)) return null;
   if (!response.ok) throw new Error(`NHL returned ${response.status}`);
   return response.text();
