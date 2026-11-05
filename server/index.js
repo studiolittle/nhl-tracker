@@ -10,7 +10,7 @@ export default app;
 const root = fileURLToPath(new URL('../', import.meta.url));
 const cached = createCache();
 async function fetchNhl(url, json = true) {
-  const response = await fetch(url, { signal: AbortSignal.timeout(15_000), headers: { 'User-Agent': 'PuckHaul-NHL-Dashboard/0.1', Accept: json ? 'application/json' : 'text/html' } });
+  const response = await fetch(url, { signal: AbortSignal.timeout(15_000), headers: { 'User-Agent': 'PuckHaul-NHL-Dashboard/0.1 (+https://puckhaul.app)', Accept: json ? 'application/json' : 'text/html' } });
   if (!response.ok) throw new Error(`NHL returned ${response.status}`);
   return json ? response.json() : response.text();
 }
