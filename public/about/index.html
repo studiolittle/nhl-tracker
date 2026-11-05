@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en-CA" data-theme="dark">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+    <meta name="theme-color" content="#0d1420"/>
+    <title>About Puck Haul: Data and Privacy</title>
+    <meta name="description" content="What Puck Haul is, where its NHL data comes from, what it can get wrong, and what is stored on your device. A free, independent fan project."/>
+    <meta name="robots" content="index, follow"/>
+    <link rel="canonical" href="https://puckhaul.app/about/"/>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+    <link rel="preload" href="/fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:site_name" content="Puck Haul"/>
+    <meta property="og:locale" content="en_CA"/>
+    <meta property="og:title" content="About Puck Haul: Data and Privacy"/>
+    <meta property="og:description" content="What Puck Haul is, where its NHL data comes from, and what is stored on your device."/>
+    <meta property="og:url" content="https://puckhaul.app/about/"/>
+    <style>
+      @font-face { font-family: 'Manrope'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('/fonts/manrope-latin.woff2') format('woff2'); }
+      :root { font-family: 'Manrope', system-ui, sans-serif; font-size: 16px; color-scheme: dark; --canvas: #0d1420; --surface: #172231; --text: #f2f7ff; --text-secondary: #c5d5e8; --line: #2b3c52; --accent: #7bc6ff; }
+      :root[data-theme="light"] { color-scheme: light; --canvas: #f1f6fc; --surface: #ffffff; --text: #17283f; --text-secondary: #405771; --line: #d8e3f0; --accent: #1767a5; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--canvas); color: var(--text); line-height: 1.6; }
+      main { max-width: 42rem; margin: 0 auto; padding: 2rem 1rem 3rem; padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
+      .wordmark { font-weight: 800; font-size: 1.25rem; letter-spacing: -.01em; color: var(--text); text-decoration: none; }
+      h1 { font-size: 1.75rem; line-height: 1.2; margin: 1.5rem 0 .5rem; }
+      h2 { font-size: 1.125rem; margin: 2rem 0 .5rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
+      p, li { color: var(--text-secondary); }
+      p { margin: 0 0 .75rem; }
+      ul { padding-left: 1.25rem; margin: 0 0 .75rem; }
+      li { margin-bottom: .375rem; }
+      a { color: var(--accent); text-underline-offset: .15em; }
+      a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+      .updated { font-size: .875rem; }
+    </style>
+    <script>
+      try {
+        var savedTheme = localStorage.getItem('puck-haul-theme');
+        if (savedTheme === 'light' || savedTheme === 'dark') document.documentElement.dataset.theme = savedTheme;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <main>
+      <a class="wordmark" href="/">puck haul</a>
+      <h1>About Puck Haul</h1>
+      <p class="updated">Last updated November 5, 2026</p>
+
+      <h2>What it is</h2>
+      <p>Puck Haul is a free NHL dashboard for a quick look on your phone. It shows scores, where to watch in Ottawa, standings, injury and lineup news, and the latest trades. You can also compare players.</p>
+      <p>It has no accounts and no ads. It is in alpha, so features and data may change. It was built by Jesse Little of <a href="https://studiolittle.ca">Studio Little</a>.</p>
+
+      <h2>Independent</h2>
+      <p>Puck Haul is an independent fan project. It is not affiliated with or endorsed by the NHL, its teams or any broadcaster.</p>
+      <p>NHL and team names, logos, player images and network logos belong to their owners. They are shown only to identify what you are looking at.</p>
+
+      <h2>Where the data comes from</h2>
+      <ul>
+        <li>Scores, standings, playoff series, schedules, player stats and broadcast listings come from the NHL's public data services.</li>
+        <li>Injury and lineup news, and trades, are read from NHL.com. Headlines and trade text keep the NHL's wording, with a link to the source.</li>
+        <li>Trades that name no NHL players, such as picks-only deals, are left out.</li>
+      </ul>
+
+      <h2>What it can get wrong</h2>
+      <p>Data can be late, missing or wrong. When a source is down, Puck Haul says so and may show saved data with the time it was saved. It does not fill gaps with guesses.</p>
+      <p>Where to watch listings are for Ottawa, in Eastern time (ET). Channel numbers depend on your TV provider, and blackouts are for your provider to confirm. "Out of market" and "Not yet confirmed" are not promises of coverage.</p>
+
+      <h2>Privacy</h2>
+      <p><strong>On your device.</strong> Your browser stores two things, and only on your device: your theme (light or dark) and your favourite teams. Puck Haul does not send them anywhere. Clear your browser's site data to remove them.</p>
+      <p><strong>On our host.</strong> Puck Haul is hosted on Vercel. Its servers handle every request and may log details such as your IP address and browser type. Puck Haul does not use that information for anything.</p>
+      <p><strong>On the NHL's servers.</strong> Team logos and player photos load from the NHL's own servers, so your browser sends those requests to the NHL.</p>
+      <p><strong>What Puck Haul does not add.</strong> There are no accounts, ads, analytics or tracking scripts in the app.</p>
+      <p>Questions or corrections? Get in touch through <a href="https://studiolittle.ca">studiolittle.ca</a>.</p>
+
+      <p><a href="/">Back to Puck Haul</a></p>
+    </main>
+  </body>
+</html>
