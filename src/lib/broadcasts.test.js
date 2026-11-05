@@ -29,3 +29,7 @@ test('a missing Ottawa regional feed is not replaced with a possibly blacked-out
  const result=getBroadcasts(game([b('SN+'),b('TSN4','A')]));
  assert.equal(result.unavailable,true);
 });
+test('RDS channels keep their names and the French flag',()=>{
+ const result=getBroadcasts(game([b('RDS','H'),b('RDS2','H'),b('TVAS')]));
+ assert.deepEqual(result.channels.map(c=>[c.name,c.french]),[['RDS',true],['RDS 2',true],['TVA Sports',true]]);
+});

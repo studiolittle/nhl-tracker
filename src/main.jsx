@@ -6,6 +6,8 @@ import PlayerPicker from './PlayerPicker.jsx';
 import SeasonHome, { useHomeFeed } from './SeasonHome.jsx';
 import { matchesSearch } from './lib/search.js';
 import { usePoll } from './lib/polling.js';
+import { viewTitle } from './lib/titles.js';
+import { pickComparablePair } from './lib/compare.js';
 import { conferenceRows, divisionGroups, gamesDiffer, noGamesYet, wildCardGroups } from './lib/standings.js';
 import { feedStart, feedRefresh, feedLoaded, feedFailed } from './lib/feed.js';
 
@@ -139,7 +141,7 @@ function Comparison({ selectedTrade, version, onReset, onBrowseTrades, season, s
     })))).then(sides => {
       if (controller.signal.aborted) return;
       setPackages(sides);
-      setChosen(previous => sides.map((side, index) => side.find(player => player.name === previous[index]?.name) || (previous[index]?.id ? previous[index] : side[0])));
+      setChosen(previous => { const pair = pickComparablePair(sides); return sides.map((side, index) => previous[index]?.id ? side.find(player => player.name === previous[index].name) || previous[index] : pair[index]); });
       setResolving(false);
       if (sides.flat().some(p => p.searchError)) setResolveError('Some players could not be loaded.');
     }).catch(error => { if (error.name !== 'AbortError') { setResolving(false); setResolveError('Player search is unavailable.'); } });
@@ -359,6 +361,8 @@ function App() {
     window.scrollTo(0, 0);
   };
   const navItems = [['Home', LayoutDashboard], ['Trades', ArrowLeftRight], ['Standings', Trophy]];
+  const baseTitle = useRef(document.title);
+  useEffect(() => { document.title = viewTitle({ view: active, tradeTab, trade: selectedTrade, seasonLabel: standings.data?.season ? seasonLabel(Math.floor(standings.data.season / 10000)) : seasonLabel(currentYear) }) || baseTitle.current; }, [active, tradeTab, selectedTrade, standings.data?.season]);
   const compareTrade = trade => navigate('Trades', 'compare', trade.id);
   const loading = trades.loading || standings.loading;
   const healthy = trades.data && standings.data && !trades.error && !standings.error && !trades.data.stale && !standings.data.stale;

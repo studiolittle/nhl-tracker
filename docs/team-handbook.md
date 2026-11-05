@@ -137,7 +137,7 @@ Status at November 2, 2026. Check that an issue still exists before acting on it
 5. **Confirmed with test input: three-team trades are misread.** The whole phrase "Toronto Maple Leafs and the Boston Bruins" becomes one team, with the abbreviation `TMLatBB`.
 6. **Confirmed: trade links are unstable.** Ids are `date-index` and the tracker lists newest first, so each new trade renumbers older ones. Shared `#trades/<id>` links can break. Do not promote them until this is fixed.
 7. **From code: possible early-July outage.** The tracker URL rolls over on July 1 at 00:00 UTC, which is 8 p.m. ET on June 30. An empty or missing new tracker makes `/api/trades` fail, with no older data to fall back on, during the offseason when trades lead Home.
-8. **From code: trades depend on standings.** `/api/trades` fails if standings fail, though the team list is only used for names and logos.
+8. **Fixed.** `/api/trades` no longer fails when standings fail: it falls back to the 32-club table in `server/teams.js` (update it if a club is added or renamed). Without standings, logos come from the client's `assets.nhle.com` fallback.
 
 ### Interface
 
@@ -154,7 +154,7 @@ Status at November 2, 2026. Check that an issue still exists before acting on it
 
 ### Search
 
-16. **Confirmed: one indexable page.** Views are hash routes, the sitemap has one URL, and `document.title` never changes. Content renders in the browser, and noscript visitors get a short fallback.
+16. **Confirmed: one indexable page.** Views are hash routes, the sitemap has one URL, and `document.title` now changes per view (`src/lib/titles.js`), which helps tabs and screen readers but not search, since the fragment is ignored. Content renders in the browser, and noscript visitors get a short fallback.
 17. **Confirmed: no analytics or error tracking.** There is no data on traffic or how people use the site.
 
 ## How the team works
