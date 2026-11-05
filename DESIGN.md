@@ -201,3 +201,9 @@ The date field is 50px high to align with the grouped navigation; the selected d
 ## Footer and text-size pass · November 5, 2026
 
 The footer is now a two-column grid on desktop and one column on phones, with the independence notice kept at 13px in the secondary text colour. Unused styles for the retired full-screen menu, segmented control, dashboard grid, verdict and latest-foot were removed. Network labels, game status second lines, broadcast notes and the phone status bar moved from 11px to 12px so viewing information is easier to read.
+
+## App icon and share images · November 5, 2026
+
+The app icon is a lowercase "ph" in Manrope 800 on the canvas colour (#0d1420): "p" in the text colour, "h" in ice blue, with a short ice-blue bar below that echoes the active-tab underline. It uses no NHL marks, team logos or player images. Files in public/: apple-touch-icon.png (180px), icon-192.png, icon-512.png and icon-maskable-512.png, which has a smaller mark so it stays inside the safe zone when the OS crops it. public/manifest.webmanifest names the app Puck Haul, starts at /, opens standalone and uses #0d1420 for background and theme colour. There is no service worker, so the app is not installable offline.
+
+Share images show the wordmark ("puck" in text colour, "haul" in ice blue), the line "Scores, standings and where to watch in Ottawa.", a thin ice-blue rule and puckhaul.app. puck-haul-social.png is 1200x630 and puck-haul-social-square.png is 1200x1200. Both use Manrope on #0d1420, contain no invented numbers, logos or photos, and are wired into the og:image and twitter:image tags with a ?v=2 cache-busting suffix.
