@@ -16,7 +16,9 @@ test('the footer and the no-JavaScript page both say Puck Haul is independent', 
 });
 
 test('upstream requests identify the site without a personal contact', () => {
-  const agent = read('server/index.js').match(/'User-Agent': '([^']+)'/)[1];
+  const source = read('server/index.js');
+  assert.equal(source.match(/'User-Agent': [^,}]+/g).every(header => header === "'User-Agent': USER_AGENT"), true, 'every upstream request uses the shared User-Agent');
+  const agent = source.match(/const USER_AGENT = '([^']+)'/)[1];
   assert.match(agent, /^PuckHaul-NHL-Dashboard\/[\d.]+ \(\+https:\/\/puckhaul\.app\)$/);
   assert.doesNotMatch(agent, /@/);
 });

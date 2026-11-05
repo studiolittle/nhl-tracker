@@ -75,7 +75,7 @@ Commands: `npm run dev` (port 3000, Node 22.12+), `npm test`, `npm run build`, `
 
 Tests use `node --test`. There are 41, all passing on November 2, 2026, in `server/*.test.js` and `src/lib/*.test.js`. Nothing tests the React components, and nothing runs end to end. A new data rule needs a test beside the existing ones.
 
-There is no `vercel.json` and no `.github/` folder in the repo. Pull request checks come from outside the repo.
+There is no `vercel.json`. `.github/workflows/ci.yml` runs `npm test` and `npm run build` on pull requests and pushes to main.
 
 ## How data flows
 
@@ -91,9 +91,9 @@ There is no `vercel.json` and no `.github/` folder in the repo. Pull request che
 | NHL-player status | Search plus player landing | 24 h | Server only |
 | Player search | `search.d3.nhle.com` | None, on purpose | 300 ms debounce |
 
-- `cached()` holds data in memory, merges concurrent requests, and serves old data marked `stale: true` when a refresh fails. Failed refreshes are not remembered, so every request retries upstream during an outage.
+- `cached()` holds data in memory, merges concurrent requests, and serves old data marked `stale: true` when a refresh fails. The cache holds at most 1,000 entries, and a failed refresh is remembered for up to 15 seconds (never longer than the entry's own lifetime), so an outage is not retried on every request.
 - On Vercel that memory belongs to one function instance and is lost on a cold start.
-- Only `/api/trades` sets CDN headers (`s-maxage=300, stale-while-revalidate=3600`). On November 2 the other routes returned `max-age=0` and an `x-vercel-cache: MISS`, so every poll reaches a function.
+- CDN headers: `/api/trades` sets `s-maxage=300, stale-while-revalidate=3600`; standings, season, scores, playoffs and updates set `max-age=0, s-maxage=15`; player stats set `s-maxage=300`; player search sets none. Saved (stale) responses are never edge-cached. Before this change, on November 2, every poll reached a function. Not yet confirmed on the live site.
 - Broken NHL requests return a 502 with one friendly message. `/api/scores` returns a 200 with an `error` field for an invalid date.
 - `trustedUrl` limits outbound links to `nhl.com` and images to `assets.nhle.com`. Keep that for any new link or image taken from upstream data.
 
@@ -141,7 +141,7 @@ Status at November 2, 2026. Check that an issue still exists before acting on it
 
 ### Interface
 
-9. **From code: panels may flash.** `useData` sets `loading: true` on each 5-minute refresh, and `Status` shows the loader before it checks for existing data. Trades and standings may blank briefly.
+9. **Fixed (refresh flash).** Data stays on screen during a refresh, and a failed refresh keeps it with a notice and Try again. The 5-minute and 30-second timers pause in hidden tabs and refresh on return (`src/lib/polling.js`).
 10. **Confirmed: dead CSS.** No component uses `.mobile-navigation`, `.menu-toggle`, `.segmented`, `.dashboard-grid`, `.verdict` or `.latest-foot`. The full-screen phone menu was replaced by persistent tabs.
 11. **Fixed.** The footer and the no-JavaScript page say Puck Haul is an independent fan project, not affiliated with or endorsed by the NHL. "Official NHL tracker" and the shield are now "Source: NHL.com trade tracker", and other "official" wording is gone. `server/wording.test.js` guards it. Legal wording not yet confirmed by a lawyer.
 12. **Confirmed: grammar.** Plural team names read "Nashville Predators gets".
@@ -150,7 +150,7 @@ Status at November 2, 2026. Check that an issue still exists before acting on it
 ### Docs that no longer match the code
 
 14. The README says Compare defaults to the previous season. The app uses the current one, and only the API default is the previous season.
-15. `docs/seasonal-home-research.md` calls for a visible "Where to watch" label and a visible TV or streaming label. Both are now screen-reader only.
+15. **Fixed.** A visible "Where to watch · Ottawa" label appears once above the game list, and each channel tile shows TV or Streaming. Each game keeps a screen-reader label.
 
 ### Search
 
