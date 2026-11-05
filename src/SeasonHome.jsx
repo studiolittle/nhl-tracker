@@ -96,7 +96,7 @@ function Scores({version,teamsFeed,onRetryTeams}) {
       <WhereToWatch game={game} region={region}/>
     </li>)}</ol>
     <div className="broadcast-footnote">{region==='ottawa'?'Ottawa listings exclude other teams’ regional feeds. ':'Regional blackouts may apply. '}Channel numbers depend on your TV provider. <a href={broadcastGuide} target="_blank" rel="noreferrer">Broadcast guide <ArrowUpRight size={13}/></a></div>
-    <div className="panel-foot"><span>{feed.data?.fetchedAt?`Checked ${new Date(feed.data.fetchedAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})} · updates every 30 seconds`:'Scores update every 30 seconds'}</span><a href="https://www.nhl.com/scores" target="_blank" rel="noreferrer">NHL.com <ArrowUpRight size={14}/></a></div>
+    <div className="panel-foot"><span>{feed.data?.fetchedAt?`Checked ${new Date(feed.data.fetchedAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})} · updates about every 30 seconds`:'Scores update about every 30 seconds'}</span><a href="https://www.nhl.com/scores" target="_blank" rel="noreferrer">NHL.com <ArrowUpRight size={14}/></a></div>
   </section>;
 }
 function LeagueUpdates({version}) {
