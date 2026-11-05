@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ArrowLeft, ArrowLeftRight, ArrowUpRight, CircleHelp, LayoutDashboard, CalendarDays, ChevronDown, MoveRight, Sun, Moon, RefreshCw, Search, ShieldCheck, Trophy, X } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, ArrowUpRight, CircleHelp, LayoutDashboard, CalendarDays, ChevronDown, MoveRight, Sun, Moon, RefreshCw, Search, Trophy, X } from 'lucide-react';
 import './styles.css';
 import PlayerPicker from './PlayerPicker.jsx';
 import SeasonHome, { useHomeFeed } from './SeasonHome.jsx';
@@ -92,7 +92,7 @@ function Logo({ team, size = 32, eager }) {
   return failed ? <span className="team-fallback" style={{ width: size }}>{team.abbrev}</span> : <img className="team-logo" src={team.logo || `https://assets.nhle.com/logos/nhl/svg/${team.abbrev}_light.svg`} alt="" width={size} height={size} loading={eager ? 'eager' : 'lazy'} onError={() => setFailed(true)} />;
 }
 function Status({ state, children }) {
-  if (state.loading && !state.data) return <div className="empty-state" role="status"><RefreshCw className="spin" size={19} /> Loading official NHL data…</div>;
+  if (state.loading && !state.data) return <div className="empty-state" role="status"><RefreshCw className="spin" size={19} /> Loading NHL data…</div>;
   if (state.error && !state.data) return <div className="empty-state error" role="alert"><CircleHelp size={21} /><span>{state.error}</span>{state.retry && <button className="text-button" onClick={state.retry}>Try again</button>}</div>;
   const saved = state.data?.fetchedAt ? ` from ${new Date(state.data.fetchedAt).toLocaleString()}` : '';
   return <>{state.error ? <div className="notice" role="status">Couldn’t refresh. Showing saved data{saved}. {state.retry && <button className="text-button" onClick={state.retry}>Try again</button>}</div> : state.data?.stale && <div className="notice">Showing saved data from {new Date(state.data.fetchedAt).toLocaleString()}. The source is temporarily unavailable.</div>}{children}</>;
@@ -273,7 +273,7 @@ function LatestTrade({ trade, onCompare }) {
 function TradeWire({ trades, filtered, query, setQuery, selectedTrade, onCompare, full, onViewAll, skipFirst }) {
   const list = skipFirst ? filtered.slice(1) : filtered;
   const visible = full ? list : list.slice(0, 4);
-  return <section className="panel trades-panel" id="trade-wire"><div className="section-heading"><div className="heading-icon"><h2>Trade wire</h2>{trades.data && <span className="count">{filtered.length} since July 1</span>}</div><span className="verified-label" title="Every trade is read from the official NHL.com trade tracker."><ShieldCheck size={15}/>Official NHL tracker</span></div>
+  return <section className="panel trades-panel" id="trade-wire"><div className="section-heading"><div className="heading-icon"><h2>Trade wire</h2>{trades.data && <span className="count">{filtered.length} since July 1</span>}</div><span className="verified-label">Source: NHL.com trade tracker</span></div>
     <div className="trade-toolbar"><div className="search-field"><Search size={18}/><input aria-label="Search trades" placeholder="Search players or teams" value={query} onChange={e => setQuery(e.target.value)}/>{query && <button aria-label="Clear trade search" onClick={() => setQuery('')}><X size={18}/></button>}</div><span className="sort-label">Newest first</span></div>
     <div className="trade-feed"><Status state={trades}>{filtered.length === 0 && !trades.loading && <div className="empty-state">No trades match this search.<button className="text-button" onClick={() => setQuery('')}>Clear search</button></div>}
       {visible.map(trade => <article className={'trade-item' + (selectedTrade?.id === trade.id ? ' selected' : '')} key={trade.id}><button className="trade-row" aria-current={selectedTrade?.id === trade.id ? 'true' : undefined} aria-label={`Compare trade from ${dateLabel(trade.date)}: ${trade.to.name} get ${trade.received}; ${trade.from.name} get ${trade.sent}`} onClick={() => onCompare(trade)}><time dateTime={trade.date}>{dateLabel(trade.date)}</time><span className="row-sides"><CompactSide team={trade.to} text={trade.received} players={sidePlayers(trade, 'to')}/><CompactSide team={trade.from} text={trade.sent} players={sidePlayers(trade, 'from')}/></span><MoveRight className="row-go" size={18}/></button></article>)}
@@ -373,7 +373,7 @@ function App() {
     {active === 'Home' && <SeasonHome teamsFeed={standings} onRetryTeams={() => setVersion(v => v + 1)} calendar={calendar} version={version} trades={trades} onCompare={compareTrade} onBrowseTrades={() => navigate('Trades')} offseasonTrade={allTrades[0] && <LatestTrade trade={allTrades[0]} onCompare={compareTrade}/>} standingsPanel={<StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} onViewAll={() => navigate('Standings')}/>}/>}
     {active === 'Trades' && <div className="trades-page"><div className="trade-tabs" aria-label="Trades views"><button aria-pressed={tradeTab === 'wire'} className={tradeTab === 'wire' ? 'selected' : ''} onClick={() => navigate('Trades')}>Trade wire</button><button aria-pressed={tradeTab === 'compare'} className={tradeTab === 'compare' ? 'selected' : ''} onClick={() => navigate('Trades', 'compare', selectedId, true)}>Compare</button></div>{tradeTab === 'wire' ? <TradeWire trades={trades} filtered={filtered} query={query} setQuery={setQuery} selectedTrade={selectedTrade} onCompare={compareTrade} full/> : pendingTrade && trades.loading ? <div className="panel"><Status state={trades}/></div> : <>{pendingTrade && <div className="notice" role="status">That trade is no longer on the wire. You can still compare any two players.</div>}{comparison}</>}</div>}
     {active === 'Standings' && <div className="standings-page"><StandingsPanel standings={standings} teams={teams} rows={rows} conference={conference} setConference={setConference} view={standingsView} setView={setStandingsView} full/></div>}
-    <footer><span>Built by Jesse Little · Puck Haul is in alpha, so features and data may change.</span><a href="https://studiolittle.ca" target="_blank" rel="noreferrer">studiolittle.ca <ArrowUpRight size={15}/></a></footer>
+    <footer><span>Built by Jesse Little · Puck Haul is in alpha, so features and data may change.</span><a href="https://studiolittle.ca" target="_blank" rel="noreferrer">studiolittle.ca <ArrowUpRight size={15}/></a><p className="footer-notice">Puck Haul is an independent fan project. It is not affiliated with or endorsed by the NHL, its teams or any broadcaster. NHL and team names, logos, player images and network logos belong to their owners. Game data comes from NHL.com and may be late or wrong.</p></footer>
   </main></div>;
 }
 createRoot(document.getElementById('root')).render(<App/>);
