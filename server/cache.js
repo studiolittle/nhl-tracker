@@ -34,3 +34,6 @@ export function createCache({ maxEntries = 1000, failureTtl = 15_000, now = Date
     return request;
   };
 }
+
+// Shared CDN caching for API routes. The browser always revalidates; Vercel's edge may reuse a response for a few seconds.
+export const edgeCache = seconds => `public, max-age=0, s-maxage=${seconds}`;

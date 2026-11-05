@@ -5,6 +5,7 @@ import './styles.css';
 import PlayerPicker from './PlayerPicker.jsx';
 import SeasonHome, { useHomeFeed } from './SeasonHome.jsx';
 import { matchesSearch } from './lib/search.js';
+import { usePoll } from './lib/polling.js';
 import { conferenceRows, divisionGroups, gamesDiffer, noGamesYet, wildCardGroups } from './lib/standings.js';
 import { feedStart, feedRefresh, feedLoaded, feedFailed } from './lib/feed.js';
 
@@ -339,7 +340,7 @@ function App() {
       : headingRef.current;
     target?.focus({ preventScroll: true });
   }, [viewKey, active, tradeTab, selectedId]);
-  useEffect(() => { const timer = setInterval(() => setVersion(v => v + 1), 300_000); return () => clearInterval(timer); }, []);
+  usePoll(() => setVersion(v => v + 1), 300_000);
   useEffect(() => {
     const onHashChange = () => { setActive(viewFromHash()); setTradeTab(tradeTabFromHash()); if (window.location.hash.startsWith('#trades/')) setSelectedId(tradeIdFromHash()); window.scrollTo(0, 0); };
     window.addEventListener('hashchange', onHashChange);

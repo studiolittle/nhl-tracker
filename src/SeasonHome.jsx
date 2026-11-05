@@ -4,12 +4,13 @@ import { getBroadcasts, broadcastGuide, outOfMarketGuide } from './lib/broadcast
 import { selectPlayoffSeries, playoffRoundLabel, playoffSeriesStatus } from './lib/playoffs.js';
 import FavouriteTeams, { useFavouriteTeams } from './FavouriteTeams.jsx';
 import { filterFavouriteGames } from './lib/favourites.js';
+import { usePoll } from './lib/polling.js';
 import './SeasonHome.css';
 
 export function useHomeFeed(url, version = 0, interval = 0) {
   const [tick, setTick] = useState(0);
   const [state, setState] = useState({ url, data: null, loading: Boolean(url), error: '' });
-  useEffect(() => { if (!interval || !url) return; const timer = setInterval(() => { if (!document.hidden) setTick(t => t + 1); }, interval); return () => clearInterval(timer); }, [url, interval]);
+  usePoll(() => setTick(t => t + 1), interval, Boolean(interval && url));
   useEffect(() => {
     if (!url) return;
     const controller = new AbortController();
@@ -49,7 +50,7 @@ function WhereToWatch({game,region}) {
   const watch = getBroadcasts(game,region);
   return <div className="watch-block"><p className="watch-label">Where to watch</p><div className="watch-guide">
     {watch.exclusivePrime ? <div className="watch-channel"><NetworkLogo name="Prime Video"/><div><strong>Prime Video</strong><span>Streaming exclusive</span></div></div> : watch.channels.length ? <>
-      {watch.channels.map(channel=><div className="watch-channel" key={channel.name} title={`${channel.streaming?'Streaming':'TV'}${channel.french?' · French':''}${!channel.national?' · regional':''}`}><NetworkLogo name={channel.name}/><div><strong>{channel.name}</strong><span className="sr-only">{channel.streaming?'Streaming':'TV'}{channel.french?' · French':''}{!channel.national?' · regional':''}</span></div></div>)}
+      {watch.channels.map(channel=><div className="watch-channel" key={channel.name} title={`${channel.streaming?'Streaming':'TV'}${channel.french?' · French':''}${!channel.national?' · regional':''}`}><NetworkLogo name={channel.name}/><div><strong>{channel.name}</strong><span>{channel.streaming?'Streaming':'TV'}{channel.french?' · French':''}{!channel.national?' · regional':''}</span></div></div>)}
       {watch.onlyStreaming&&<p className="watch-note">No TV channel listed.</p>}
       {watch.regional&&region!=='ottawa'&&<p className="watch-note">Regional blackouts apply.</p>}
     </> : <div className="watch-unavailable"><span>{watch.outOfMarket?'Out of market':'Not yet confirmed'}</span><a className="watch-coverage" href={watch.outOfMarket?outOfMarketGuide:broadcastGuide} target="_blank" rel="noreferrer">{watch.outOfMarket?'Check options':'Check listings'} <ArrowUpRight size={13}/></a></div>}
@@ -82,6 +83,7 @@ function Scores({version,teamsFeed,onRetryTeams}) {
     </div>
     <FeedMessage feed={feed}/>
     {favouritesOnly&&!favourites.preferences.teams.length?<div className="no-games"><h3>Follow a team to get started.</h3><p>Choose your favourite teams to see their games here.</p><button className="text-button" onClick={()=>setPickerOpen(true)}>Choose teams <ArrowRight size={16}/></button></div>:feed.data&&shownGames.length===0&&!feed.error&&<div className="no-games"><h3>{favouritesOnly?'Your teams aren’t playing on this date.':`No games scheduled${day===now?' today':''}.`}</h3><p>Browse another date for scores and viewing information.</p>{favouritesOnly?<button className="text-button" onClick={()=>favourites.setPreferences(previous=>({...previous,filter:'all'}))}>Show all games <ArrowRight size={16}/></button>:<button className="text-button" onClick={()=>setDate(shiftDate(day,1))}>See tomorrow <ArrowRight size={16}/></button>}</div>}
+    {shownGames.length>0&&<p className="watch-caption" aria-hidden="true">Where to watch{region==='ottawa'?' · Ottawa':''}</p>}
     <ol className="game-list">{shownGames.map(game=><li className="game-row" key={game.id}>
       <div className="game-status-tab"><GameStatus game={game}/>{game.gameType===3&&<span>Playoffs</span>}{game.gameType===1&&<span>Preseason</span>}</div>
       <div className="game-matchup">

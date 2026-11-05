@@ -78,3 +78,9 @@ test('request-driven keys cannot grow the cache or the failure list past the cap
   await cached('ok-0', async () => { loads++; return { i: 0 }; });
   assert.equal(loads, 1001, 'early keys were evicted rather than kept forever');
 });
+
+test('edge caching lets the CDN reuse a response briefly and makes browsers revalidate', async () => {
+  const { edgeCache } = await import('./cache.js');
+  assert.equal(edgeCache(15), 'public, max-age=0, s-maxage=15');
+  assert.equal(edgeCache(300), 'public, max-age=0, s-maxage=300');
+});

@@ -2,7 +2,7 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { seasonStart, trackerUrl, parseTrades, playerStats, hasRecentNhlGames } from './nhl.js';
-import { createCache } from './cache.js';
+import { createCache, edgeCache } from './cache.js';
 import { easternDate, getSeasonContext, normalizeGames, normalizePlayoffSeries, parsePlayerNews } from './home.js';
 
 const app = express();
@@ -29,14 +29,16 @@ async function standings() {
 // A request the visitor got wrong is a 400 with its own message; only upstream failures read as "NHL unavailable".
 const badRequest = message => Object.assign(new Error(message), { status: 400 });
 const route = (fn, cacheControl) => async (req, res) => { try { const body = await fn(req); if (cacheControl && !body.stale) res.set('Cache-Control', cacheControl); res.json(body); } catch (error) { if (error.status === 400) return res.status(400).json({ error: error.message }); console.error(error.message); res.status(502).json({ error: 'The NHL source is temporarily unavailable. Please try again.' }); } };
-app.get('/api/standings', route(() => standings()));
+// Edge lifetimes stay at or below the refresh promised on screen; saved (stale) bodies are never edge-cached (see route()).
+const FEED_EDGE = edgeCache(15);
+app.get('/api/standings', route(() => standings(), FEED_EDGE));
 async function seasonCalendar() {
   return cached('season-calendar', () => fetchNhl('https://api-web.nhle.com/v1/schedule/now'), 3_600_000);
 }
 app.get('/api/season', route(async () => {
   const calendar = await seasonCalendar();
   return { ...getSeasonContext(calendar), stale: calendar.stale, fetchedAt: calendar.fetchedAt };
-}));
+}, FEED_EDGE));
 app.get('/api/scores', route(async req => {
   const requested = String(req.query.date || 'now');
   const today = easternDate();
@@ -51,7 +53,7 @@ app.get('/api/scores', route(async req => {
     return { date: score.currentDate, today, games: normalizeGames(score, { date: score.currentDate, teams: table.teams }), source: 'https://www.nhl.com/scores',
       days: (score.gameWeek || []).map(day => ({ date: day.date, numberOfGames: day.numberOfGames })) };
   }, 30_000);
-}));
+}, FEED_EDGE));
 app.get('/api/playoffs', route(async () => {
   const calendar = await seasonCalendar();
   const context = getSeasonContext(calendar);
@@ -61,12 +63,12 @@ app.get('/api/playoffs', route(async () => {
     if (!Array.isArray(data.series)) throw new Error('NHL playoff series unavailable');
     return { series: normalizePlayoffSeries(data), season: context.season, source: 'https://www.nhl.com/stanley-cup-playoffs' };
   }, 60_000);
-}));
+}, FEED_EDGE));
 app.get('/api/updates', route(() => cached('player-updates', async () => {
   const html = await fetchNhl('https://www.nhl.com/news/', false);
   const updates = parsePlayerNews(html);
   return { updates, source: 'https://www.nhl.com/news/' };
-}, 300_000)));
+}, 300_000), FEED_EDGE));
 const normalizeName = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 // Resolves to true/false, or null when the NHL lookup failed (callers keep the trade in that case).
 async function isNhlPlayer(name, year) {
@@ -120,7 +122,7 @@ app.get('/api/players/:id', route(async req => {
     const player = await fetchNhl(`https://api-web.nhle.com/v1/player/${req.params.id}/landing`);
     return { player: playerStats(player, start * 10000 + start + 1) };
   }, 900_000);
-}));
+}, edgeCache(300)));
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Unknown API route' }));
 if (process.env.VERCEL || process.argv.includes('--production')) {
   app.use(express.static(path.join(root, 'dist')));
