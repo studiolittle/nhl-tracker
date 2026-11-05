@@ -441,7 +441,7 @@ html { scrollbar-color: var(--line-strong) var(--canvas); }
   .topbar nav button svg { width: 17px; height: 17px; }
   .topbar nav .active { background: transparent; border-bottom-color: var(--accent); }
   main { padding-inline: 12px; }
-  .workspace-bar { min-height: 38px; font-size: .6875rem; }
+  .workspace-bar { min-height: 38px; font-size: .75rem; }
   .sync-status { gap: 5px; }
   .page-heading { padding: 4px 4px 18px; }
   h1 { font-size: 1.5rem; line-height: 1.25; text-wrap: pretty; }

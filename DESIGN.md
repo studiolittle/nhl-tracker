@@ -59,7 +59,7 @@ typography:
     lineHeight: 1.2
   network-label:
     fontFamily: "Manrope, sans-serif"
-    fontSize: ".6875rem"
+    fontSize: ".75rem"
     fontWeight: 700
     lineHeight: 1.4
 rounded:
@@ -169,6 +169,7 @@ Panels have softly rounded corners. Small network tags use tighter corners; butt
 - **Network labels:** small tonal tags with compact network logos and names. Broadcast metadata remains available through accessible text; the current score surface is scoped to Ottawa listings and ET times.
 - **Score rows:** status at left, full team names stacked, scores aligned at right, broadcast tags below. Names can wrap; scores remain separate from the name column.
 - **Schedule favourites:** All games / Favourites controls use the selected ice-blue surface. Teams opens an inline searchable list, with pressed star buttons and a Done action. The list has two columns on desktop and one on phones, a bounded scroll area, and 48px minimum team targets. Team selections and filter mode persist on the device.
+- **Footer:** a thin top rule separates it from the page. The byline with alpha note and the studiolittle.ca link (44px tall, accent text, underlined) sit in the left column and the independence notice (.8125rem, text-secondary) in the right at wider widths; everything stacks in one column at ≤760px. The notice wording lives in src/main.jsx and changes only through content and legal review.
 - **Navigation:** the same three destinations persist across breakpoints. Phone tabs remain visible as part of the sticky header.
 - **Focus:** interactive elements use a 3px accent outline with 4px offset. Trade rows use an inward outline offset; search inputs defer the treatment to their container.
 
@@ -196,3 +197,7 @@ Date navigation and schedule filters now have a shared inset surface, while sele
 Search fields have a visible focus outline and 44px clear controls. Focus rings stay inside scrollable team and trade rows. Trade announcement controls wrap on narrow phones, automatic-update indicators use blue, and disabled controls use a not-allowed cursor. The standings shortcut appears after team data is available.
 
 The date field is 50px high to align with the grouped navigation; the selected date retains a quieter ice-blue border. Empty schedules use centered messaging. Palette, font, content sources and navigation destinations are preserved.
+
+## Footer and text-size pass · November 5, 2026
+
+The footer is now a two-column grid on desktop and one column on phones, with the independence notice kept at 13px in the secondary text colour. Unused styles for the retired full-screen menu, segmented control, dashboard grid, verdict and latest-foot were removed. Network labels, game status second lines, broadcast notes and the phone status bar moved from 11px to 12px so viewing information is easier to read.

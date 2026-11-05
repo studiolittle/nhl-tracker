@@ -52,7 +52,7 @@
 .game-row { display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: start; gap: 8px 16px; padding: 18px 20px; }
 .game-row + .game-row { border-top: 1px solid var(--line); }
 .game-status-tab { display: grid; gap: 4px; padding-top: 3px; font-size: .8125rem; line-height: 1.5; font-weight: 700; font-variant-numeric: tabular-nums; }
-.game-status-tab > span + span { color: var(--muted); font-size: .6875rem; font-weight: 500; }
+.game-status-tab > span + span { color: var(--muted); font-size: .75rem; font-weight: 500; }
 .game-live { display: grid; gap: 2px; color: var(--success); }
 .game-live > span:first-child { white-space: nowrap; }
 .game-clock { font-size: .75rem; font-weight: 500; }
@@ -71,9 +71,9 @@
 .watch-channel > div { min-width: 0; }
 .network-logo { display: block; width: 23px; height: 14px; flex-shrink: 0; object-fit: contain; }
 :root:not([data-theme="light"]) .network-logo { filter: grayscale(1) brightness(0) invert(1); }
-.watch-channel strong { display: block; font-size: .6875rem; line-height: 1.4; font-weight: 700; overflow-wrap: anywhere; }
-.watch-channel span:not(.sr-only) { display: block; color: var(--text-secondary); font-size: .6875rem; line-height: 1.4; }
-.watch-note { width: 100%; color: var(--muted); font-size: .6875rem; line-height: 1.5; }
+.watch-channel strong { display: block; font-size: .75rem; line-height: 1.4; font-weight: 700; overflow-wrap: anywhere; }
+.watch-channel span:not(.sr-only) { display: block; color: var(--text-secondary); font-size: .75rem; line-height: 1.4; }
+.watch-note { width: 100%; color: var(--muted); font-size: .75rem; line-height: 1.5; }
 .watch-unavailable { display: flex; align-items: center; flex-wrap: wrap; gap: 0 10px; color: var(--muted); font-size: .75rem; line-height: 1.5; }
 .watch-coverage { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--accent); }
 .broadcast-footnote { padding: 16px 20px; border-top: 1px solid var(--line); color: var(--text-secondary); font-size: .75rem; line-height: 1.6; }
@@ -120,7 +120,7 @@
   .score-day-strip button:first-child, .score-day-strip button:last-child { display: none; }
   .game-row { grid-template-columns: 68px minmax(0, 1fr); gap: 8px 10px; padding: 16px 12px; }
   .game-status-tab { font-size: .75rem; }
-  .game-clock { font-size: .6875rem; }
+  .game-clock { font-size: .75rem; }
   .score-team { gap: 6px; grid-template-columns: 22px minmax(0, 1fr) auto; }
   .score-team .team-logo { width: 22px; height: 22px; }
   .score-team-name { font-size: .8125rem; }
